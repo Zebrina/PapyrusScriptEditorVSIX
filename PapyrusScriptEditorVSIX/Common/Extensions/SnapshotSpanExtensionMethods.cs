@@ -6,47 +6,25 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace Papyrus.Common.Extensions {
-    internal static class TextSnapshotExtensionMethods {
-        #region ITextSnapshot
-        
-        public static SnapshotSpan Ignore(this ITextSnapshotLine, int offset, Predicate<char> pred) {
-            
+    internal static class TextSnapshotSpanExtensionMethods {
+        public static SnapshotSpan Subspan(this SnapshotSpan span, int offset, int length) {
+            return new SnapshotSpan(span.Snapshot, new Span(span.Start.Position + offset, length));
         }
-        public static SnapshotSpan Ignore(this ITextSnapshotLine, int offset) {
-            
-        }
-        
-        #endregion
-        
-        #region SnapshotSpan
-        
-        public static SnapshotSpan Subspan(this SnapshotSpan value, int offset, int length) {
-            return new SnapshotSpan(value.Snapshot, new Span(value.Start.Position + offset, length));
-        }
-        public static SnapshotSpan Subspan(this SnapshotSpan value, int offset) {
-            return value.Subspan(offset, value.Length - offset);
+        public static SnapshotSpan Subspan(this SnapshotSpan span, int offset) {
+            return span.Subspan(offset, span.Length - offset);
         }
 
-        public static SnapshotSpan Trim(this SnapshotSpan value) {
-            string text = value.GetText();
-
-            int offset;
-            for (offset = 0; offset < text.Length; ++offset) {
-                if (!Char.IsWhiteSpace(text[offset])) {
-                    break;
+        public static SnapshotSpan Ignore(this SnapshotSpan span, Predicate<char> pred) {
+            int offset = span.Start.Position;
+            for (int i = 0; i < span.Length; ++i) {
+                if (!pred.Invoke(span.Snapshot.Item[i + offset])) {
+                    return new SnapshotSpan(span.Start.Add(i), span.End);
                 }
             }
-
-            int length = text.Length - offset;
-            for (; length >= 0; --length) {
-                if (!Char.IsWhiteSpace(text[offset + (length - 1)])) {
-                    break;
-                }
-            }
-
-            return new SnapshotSpan(value.Start + offset, length);
+            return new SnapshotSpan(span.End, 0);
         }
-        
-        #endregion
+        public static SnapshotSpan Ignore(this SnapshotSpan span) {
+            return span.Ignore({ c => Char.IsWhiteSpace(c) });
+        }
     }
 }
