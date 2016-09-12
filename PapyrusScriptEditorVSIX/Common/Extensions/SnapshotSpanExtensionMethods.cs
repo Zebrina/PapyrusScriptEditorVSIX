@@ -1,4 +1,4 @@
-﻿using Microsoft.VisualStudio.Text;
+using Microsoft.VisualStudio.Text;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -6,7 +6,20 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace Papyrus.Common.Extensions {
-    internal static class SnapshotSpanExtended {
+    internal static class TextSnapshotExtensionMethods {
+        #region ITextSnapshot
+        
+        public static SnapshotSpan Ignore(this ITextSnapshotLine, int offset, Predicate<char> pred) {
+            
+        }
+        public static SnapshotSpan Ignore(this ITextSnapshotLine, int offset) {
+            
+        }
+        
+        #endregion
+        
+        #region SnapshotSpan
+        
         public static SnapshotSpan Subspan(this SnapshotSpan value, int offset, int length) {
             return new SnapshotSpan(value.Snapshot, new Span(value.Start.Position + offset, length));
         }
@@ -33,5 +46,7 @@ namespace Papyrus.Common.Extensions {
 
             return new SnapshotSpan(value.Start + offset, length);
         }
+        
+        #endregion
     }
 }
