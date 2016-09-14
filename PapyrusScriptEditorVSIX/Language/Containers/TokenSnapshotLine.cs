@@ -1,11 +1,17 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
 namespace Papyrus.Language {
-    public class TokenSnapshotLine : IList<Token>, IReadOnlyList<Token>, ICollection<Token>, IReadOnlyCollection<Token>, IEnumerable<Token>, IEnumerable {
+    public interface IReadOnlyTokenSnapshotLine : IReadOnlyList<Token>, IReadOnlyCollection<Token> {
+        bool IsEmpty { get; }
+    }
+
+    [DebuggerStepThrough]
+    public class TokenSnapshotLine : IReadOnlyTokenSnapshotLine, IList<Token>, IReadOnlyList<Token>, ICollection<Token>, IReadOnlyCollection<Token>, IEnumerable<Token>, IEnumerable {
         private List<Token> container;
 
         public TokenSnapshot() {
@@ -22,10 +28,20 @@ namespace Papyrus.Language {
         public int Count {
             get { return container.Count; }
         }
+        public bool IsEmpty {
+            get { return container.Count > 0; }
+        }
         bool ICollection<Token>.IsReadOnly {
             get { return ((ICollection<Token>)container).IsReadOnly; }
         }
 
+        public bool AddToken(Token token) {
+            if (token != null) {
+                container.Add(token);
+                return true;
+            }
+            return false;
+        }
         void ICollection<Token>.Add(Token item) {
             container.Add(item);
         }
@@ -52,7 +68,7 @@ namespace Papyrus.Language {
             container.RemoveAt(index);
         }
 
-        void ICollection<Token>.Clear() {
+        public void Clear() {
             container.Clear();
         }
 
