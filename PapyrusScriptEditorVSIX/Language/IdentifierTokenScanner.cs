@@ -11,11 +11,13 @@ using System.Threading.Tasks;
 namespace Papyrus.Language {
     public class IdentifierTokenScanner : TokenScannerModule {
         public override bool Scan(SnapshotSpan sourceSnapshotSpan, int offset, ref TokenScannerState state, out Token token) {
-            string text = sourceSnapshotSpan.GetText();
-            int length = Delimiter.FindNext(text, offset) - offset;
-            if (Identifier.IsValid(text.Substring(offset, length))) {
-                token = new Token(new Identifier(text.Substring(offset, length)), sourceSnapshotSpan.Subspan(offset, length));
-                return true;
+            if (state == TokenScannerState.Text) {
+                string text = sourceSnapshotSpan.GetText();
+                int length = Delimiter.FindNext(text, offset) - offset;
+                if (Identifier.IsValid(text.Substring(offset, length))) {
+                    token = new Token(new Identifier(text.Substring(offset, length)), sourceSnapshotSpan.Subspan(offset, length));
+                    return true;
+                }
             }
 
             token = null;
