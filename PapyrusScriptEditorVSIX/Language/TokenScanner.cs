@@ -1,4 +1,4 @@
-﻿using Microsoft.VisualStudio.Text;
+using Microsoft.VisualStudio.Text;
 using Papyrus.Common;
 using Papyrus.Language.Components;
 using Papyrus.Utilities;
@@ -14,29 +14,11 @@ namespace Papyrus.Language {
     public abstract class TokenScannerModule {
         private TokenScannerModule next = null;
 
-        public abstract bool Scan(SnapshotSpan sourceSnapshotSpan, int offset, ref TokenScannerState state, out Token token);
-        public bool ScanLine(ITextSnapshotLine sourceSnapshotLine, int offset, ref TokenScannerState state, out Token token) {
-            return Scan(new SnapshotSpan(sourceSnapshotLine.Start, sourceSnapshotLine.End), offset, ref state, out token);
+        protected abstract bool Scan(SnapshotSpan sourceSnapshotSpan, ref TokenScannerState state, out Token token);
+        public bool Scan(SnapshotSpan sourceSnapshotSpan, ref TokenScannerState state, out Token token) {
+            return Scan(sourceSnapshotSpan, ref state, out token) ||
+                (next != null && next.Scan(sourceSnapshotSpan, ref state, out token));
         }
-
-        /*
-        public bool Scan(SnapshotSpan sourceSnapshotSpan, int offset, ref TokenScannerState state, ICollection<Token> tokens) {
-            Token token;
-            if (Scan(sourceSnapshotSpan, offset, ref state, out token)) {
-                tokens.Add(token);
-                return true;
-            }
-            return next != null && next.Scan(sourceSnapshotSpan, offset, ref state, out token);
-        }
-        public bool ScanLine(ITextSnapshotLine sourceSnapshotSpan, int offset, ref TokenScannerState state, ICollection<Token> tokens) {
-            Token token;
-            if (ScanLine(sourceSnapshotSpan, offset, ref state, out token)) {
-                tokens.Add(token);
-                return true;
-            }
-            return next != null && next.ScanLine(sourceSnapshotSpan, offset, ref state, out token);
-        }
-        */
 
         private void Add(TokenScannerModule module) {
             if (module != null) {
@@ -58,12 +40,6 @@ namespace Papyrus.Language {
         }
     }
 
-    public enum TokenScannerResult {
-        EndSource,
-        EndLine,
-        ExtendedLine,
-    }
-
     public enum TokenScannerState {
         Text,
         BlockComment,
@@ -74,40 +50,40 @@ namespace Papyrus.Language {
     public class TokenScanner {
         private TokenScannerModule tokenScannerModule;
         private TokenScannerState state;
-        private int offset;
 
         public TokenScanner(TokenScannerModule tokenScannerModule) {
             this.tokenScannerModule = tokenScannerModule;
             this.state = TokenScannerState.Text;
-            this.offset = 0;
         }
 
         public void ForceState(TokenScannerState state) {
             this.state = state;
         }
 
-        public void ScanSnapshotLine(ITextSnapshotLine snapshotLine, IList<Token> tokens) {
-            offset = 0;
+        public bool ScanLine(ITextSnapshotLine textLine, TokenSnapshotLine tokenLine) {
             Token token;
-            while (tokenScannerModule.ScanLine(snapshotLine, offset, ref state, out token)) {
-                tokens.Add(token);
-                offset += token.Span.Length;
+            SnapshotSpan span = textLine.ToSpan();
+            bool eol = false;
+            while (!eol) {
+                span = span.IgnoreWhile();
+                eol = tokenScannerModule.Scan(span, offset, ref state, out token);
+                tokenLine.AddToken(token);
+                span = span.Subspan(token.Span.Length);
             }
+            return !tokenLine.IsEmpty;
         }
-
-        public IList<IList<Token>> ScanSnapshot(ITextSnapshot snapshot) {
-            state = TokenScannerState.Text;
-            var result = new List<IList<Token>>();
-            foreach (ITextSnapshotLine line in snapshot.Lines) {
-                var tokens = new List<Token>();
-                ScanSnapshotLine(line, tokens);
-
-                if (tokens.Count > 0) {
-                    result.Add(tokens);
+        public bool ScanSource(ITextSnapshot textSource, TokenSnapshot tokenSource) {
+            bool success = true;
+            foreach (var lineIn in textSource.Lines) {
+                TokenSnapshotLine tokenLine = new TokenSnapshotLine();
+                if (ScanLine(lineIn, tokenLine)) {
+                    tokenSource.AddLine(tokenLine);
+                }
+                else {
+                    success = false;
                 }
             }
-
-            return result;
+            return success;
         }
     }
 }
