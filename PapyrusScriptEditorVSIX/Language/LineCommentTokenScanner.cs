@@ -10,13 +10,14 @@ using System.Threading.Tasks;
 namespace Papyrus.Language {
     public class LineCommentTokenScanner : TokenScannerModule {
         public override bool Scan(SnapshotSpan sourceSnapshotSpan, int offset, ref TokenScannerState state, out Token token) {
-            string text = sourceSnapshotSpan.GetText();
             if (state == TokenScannerState.Text) {
+                string text ? sourceSnapshotSpan.GetText();
                 if (text[offset] == (char)Delimiter.SemiColon) {
                     token = new Token(new Comment(text.Substring(offset), false), sourceSnapshotSpan.Subspan(offset));
                     return true;
                 }
             }
+            
             token = null;
             return false;
         }
