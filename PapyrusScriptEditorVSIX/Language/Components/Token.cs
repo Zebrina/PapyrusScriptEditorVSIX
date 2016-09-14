@@ -6,22 +6,15 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace Papyrus.Language.Components {
-    public class Token {
+    public struct Token {
         public static readonly Token Null = new Token(null, new SnapshotSpan());
 
-        private TokenType type;
-        private SnapshotSpan span;
+        public TokenType Type { get; set; }
+        public SnapshotSpan Span { get; set; }
 
         public Token(TokenType type, SnapshotSpan span) {
-            this.type = type;
-            this.span = span;
-        }
-
-        public TokenType Type {
-            get { return type; }
-        }
-        public SnapshotSpan Span {
-            get { return span; }
+            this.Type = type;
+            this.Span = span;
         }
     }
 }
