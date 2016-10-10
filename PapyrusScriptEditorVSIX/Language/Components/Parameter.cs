@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using Papyrus.Language.Components.Tokens;
+using System.Collections.Generic;
 using System.Text;
 
 namespace Papyrus.Language.Components {

@@ -1,5 +1,6 @@
 ﻿using Microsoft.VisualStudio.Shell;
 using Papyrus.Common;
+using Papyrus.Language.Components.Tokens;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
