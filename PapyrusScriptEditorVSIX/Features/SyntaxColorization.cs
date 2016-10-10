@@ -7,15 +7,14 @@
 using Microsoft.VisualStudio.Text;
 using Microsoft.VisualStudio.Text.Classification;
 using Microsoft.VisualStudio.Utilities;
-using Papyrus.Language;
 using Papyrus.Language.Components;
-using Papyrus.Language.Parsing;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.Composition;
+using System.Linq;
 
 namespace Papyrus.Features {
-    internal interface ISyntaxColorable {
+    public interface ISyntaxColorable {
         IClassificationType GetClassificationType(IClassificationTypeRegistryService registry);
     }
 
@@ -23,14 +22,28 @@ namespace Papyrus.Features {
     /// Classifier that classifies all text as an instance of the "SyntaxColorization" classification type.
     /// </summary>
     internal class SyntaxColorization : IClassifier {
-        private readonly IClassificationTypeRegistryService registry;
+        private IClassificationTypeRegistryService registry;
+        private ITextBuffer buffer;
+        private ITextSnapshot snapshot;
+        private IReadOnlyTokenSnapshot tokenSnapshot;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="SyntaxColorization"/> class.
         /// </summary>
         /// <param name="registry">Classification registry.</param>
-        internal SyntaxColorization(IClassificationTypeRegistryService registry) {
+        internal SyntaxColorization(IClassificationTypeRegistryService registry, ITextBuffer buffer) {
             this.registry = registry;
+            this.buffer = buffer;
+            this.snapshot = buffer.CurrentSnapshot;
+            this.buffer.Changed += Buffer_Changed;
+            BackgroundParser.Singleton.RequestParse(buffer.CurrentSnapshot);
+            this.tokenSnapshot = BackgroundParser.Singleton.TokenSnapshot;
+        }
+
+        private void Buffer_Changed(object sender, TextContentChangedEventArgs e) {
+            if (e.After == buffer.CurrentSnapshot) {
+                ReParse();
+            }
         }
 
         /// <summary>
@@ -53,25 +66,8 @@ namespace Papyrus.Features {
         /// <param name="span">The span currently being classified.</param>
         /// <returns>A list of ClassificationSpans that represent spans identified to be of this classification.</returns>
         public IList<ClassificationSpan> GetClassificationSpans(SnapshotSpan span) {
-            TokenScannerModule scanner = new BlockCommentTokenScanner();
-
-            scanner += new LineCommentTokenScanner();
-            scanner += new StringLiteralTokenScanner();
-            scanner += new NumericLiteralTokenScanner();
-            scanner += new OperatorTokenScanner();
-            scanner += new KeywordTokenScanner();
-            scanner += new ScriptObjectTokenScanner();
-            scanner += new IdentifierTokenScanner();
-
-            ParsedLine parsedLine = new ParsedLine();
-
-            List<Token> tokens = new List<Token>();
-            TokenScannerState state = TokenScannerState.Text;
-
-            //scanner.Scan(span, 0, ref state, tokens);
-
             var result = new List<ClassificationSpan>();
-            foreach (Token token in tokens) {
+            foreach (var token in tokenSnapshot.Tokens) {
                 ISyntaxColorable colorable = token.Type as ISyntaxColorable;
                 if (colorable != null) {
                     result.Add(new ClassificationSpan(token.Span, colorable.GetClassificationType(registry)));
@@ -82,6 +78,39 @@ namespace Papyrus.Features {
         }
 
         private void ReParse() {
+            BackgroundParser.Singleton.RequestParse(buffer.CurrentSnapshot);
+
+            ITextSnapshot newSnapshot = buffer.CurrentSnapshot;
+            IReadOnlyTokenSnapshot newTokenSnapshot = BackgroundParser.Singleton.TokenSnapshot;
+
+            List<Span> oldSpans = new List<Span>(tokenSnapshot.Tokens.Select(t => t.Span.TranslateTo(newSnapshot, SpanTrackingMode.EdgeExclusive).Span));
+            List<Span> newSpans = new List<Span>(newTokenSnapshot.Tokens.Select(t => t.Span.Span));
+
+            NormalizedSpanCollection oldSpanCollection = new NormalizedSpanCollection(oldSpans);
+            NormalizedSpanCollection newSpanCollection = new NormalizedSpanCollection(newSpans);
+
+            NormalizedSpanCollection removed = NormalizedSpanCollection.Difference(oldSpanCollection, newSpanCollection);
+
+            int changeStart = Int32.MaxValue;
+            int changeEnd = -1;
+
+            if (removed.Count > 0) {
+                changeStart = removed.First().Start;
+                changeEnd = removed.Last().End;
+            }
+
+            if (newSpans.Count > 0) {
+                changeStart = Math.Min(changeStart, newSpans.First().Start);
+                changeEnd = Math.Max(changeEnd, newSpans.Last().Start);
+            }
+
+            snapshot = newSnapshot;
+            tokenSnapshot = newTokenSnapshot;
+
+            if (changeStart <= changeEnd) {
+                ITextSnapshot snap = snapshot;
+                ClassificationChanged?.Invoke(this, new ClassificationChangedEventArgs(new SnapshotSpan(snapshot, Span.FromBounds(changeStart, changeEnd))));
+            }
         }
     }
 
@@ -104,7 +133,7 @@ namespace Papyrus.Features {
         /// <param name="buffer">The <see cref="ITextBuffer"/> to classify.</param>
         /// <returns>A classifier for the text buffer, or null if the provider cannot do so in its current state.</returns>
         public IClassifier GetClassifier(ITextBuffer buffer) {
-            return buffer.Properties.GetOrCreateSingletonProperty(creator: () => new SyntaxColorization(this.classificationRegistry));
+            return buffer.Properties.GetOrCreateSingletonProperty(creator: () => new SyntaxColorization(classificationRegistry, buffer));
         }
     }
 }

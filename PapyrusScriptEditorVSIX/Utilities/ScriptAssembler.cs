@@ -1,8 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Papyrus.Utilities {
     /*
@@ -31,7 +27,7 @@ namespace Papyrus.Utilities {
     }
 
     public static class ScriptAssembler {
-        public static readonly Guid OutputWindowGuid = new Guid("DE284B5B-0BB5-4D69-9C8D-545F677E2B6A");
+        public static readonly Guid OutputWindowGuid = new Guid("379DDA24-5A69-46D0-8A3A-0AF485468957");
 
     }
 }

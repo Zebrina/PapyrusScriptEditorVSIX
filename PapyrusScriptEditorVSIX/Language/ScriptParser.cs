@@ -20,11 +20,11 @@ namespace Papyrus.Language {
 
         private readonly IEnumerable<string> sourceFolders;
 
-        [DebuggerStepThrough]
+        //[DebuggerStepThrough]
         public ScriptParser(params string[] sourceFolders) {
             this.sourceFolders = sourceFolders;
         }
-        [DebuggerStepThrough]
+        //[DebuggerStepThrough]
         public ScriptParser(IEnumerable<string> sourceFolders) {
             this.sourceFolders = new List<string>(sourceFolders);
         }
@@ -237,6 +237,5 @@ namespace Papyrus.Language {
             return true;
         }
     }
-}
-
+} 
 #endif

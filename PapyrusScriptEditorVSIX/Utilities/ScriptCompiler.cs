@@ -1,12 +1,8 @@
 ﻿using Microsoft.VisualStudio.Shell;
-using Microsoft.VisualStudio.Shell.Interop;
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace Papyrus.Utilities {
@@ -56,7 +52,7 @@ namespace Papyrus.Utilities {
     }
 
     public static class ScriptCompiler {
-        public const string OutputGuidString = "B603A0E7-ACDB-4C82-895E-89B08D6B693E";
+        public const string OutputGuidString = "65B48410-04CA-4271-BFD9-5DE841EC15FC";
 
         private static string compilerPath = @"C:\Games\Steam\steamapps\common\Skyrim\Papyrus Compiler\PapyrusCompiler.exe";
 

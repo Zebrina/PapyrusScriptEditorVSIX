@@ -6,12 +6,8 @@
 
 using System;
 using System.ComponentModel.Design;
-using System.Globalization;
 using Microsoft.VisualStudio.Shell;
-using Microsoft.VisualStudio.Shell.Interop;
 using Microsoft.VisualStudio.TextManager.Interop;
-using Microsoft.VisualStudio;
-using Microsoft.VisualStudio.Package;
 
 namespace Papyrus.Commands {
     /// <summary>
@@ -26,7 +22,7 @@ namespace Papyrus.Commands {
         /// <summary>
         /// Command menu group (command set GUID).
         /// </summary>
-        public static readonly Guid CommandSet = new Guid("c81f38dd-9cbf-44c0-8009-540511ceec2d");
+        public static readonly Guid CommandSet = new Guid("46249FA0-CDC3-4CFC-9B23-554B148ABF84");
 
         /// <summary>
         /// VS Package that provides this command, not null.

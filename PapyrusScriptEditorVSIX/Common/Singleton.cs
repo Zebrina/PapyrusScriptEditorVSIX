@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace Papyrus.Common {
+﻿namespace Papyrus.Common {
     public class Singleton<T> where T : new() {
         private static T instance;
         private static object syncRoot = new object();

@@ -1,10 +1,7 @@
-﻿#if false
-using Microsoft.VisualStudio.Text;
+﻿using Microsoft.VisualStudio.Text;
 using Microsoft.VisualStudio.Text.Tagging;
 using Microsoft.VisualStudio.Utilities;
 using Papyrus.Language;
-using Papyrus.Language.Components;
-using Papyrus.Language.Parsing;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.Composition;
@@ -13,14 +10,14 @@ using System.Linq;
 
 // https://msdn.microsoft.com/en-us/library/ee197665.aspx
 
-namespace Papyrus {
+namespace Papyrus.Features {
     /// <summary>
     /// Outlining for properties, functions, events and states.
     /// https://msdn.microsoft.com/en-us/library/ee197665.aspx
     /// </summary>
-    internal sealed class Outlining : ITagger<IOutliningRegionTag> {
+    internal sealed class OutliningTagger : ITagger<IOutliningRegionTag> {
         private class PartialRegion {
-            public TokenType Outlineable { get; set; }
+            public Token Outlineable { get; set; }
             public int StartLine { get; set; }
             public PartialRegion PartialParent { get; set; }
         }
@@ -36,13 +33,13 @@ namespace Papyrus {
         private ITextSnapshot snapshot;
         private List<Region> regions;
 
-        [DebuggerStepThrough]
-        public Outlining(ITextBuffer buffer) {
+        //[DebuggerStepThrough]
+        public OutliningTagger(ITextBuffer buffer) {
             this.buffer = buffer;
-            snapshot = buffer.CurrentSnapshot;
-            regions = new List<Region>();
+            this.snapshot = buffer.CurrentSnapshot;
+            this.regions = new List<Region>();
             ReParse();
-            buffer.Changed += BufferChanged;
+            this.buffer.Changed += BufferChanged;
         }
 
         public IEnumerable<ITagSpan<IOutliningRegionTag>> GetTags(NormalizedSnapshotSpanCollection spans) {
@@ -68,6 +65,8 @@ namespace Papyrus {
         }
 
         void ReParse() {
+            BackgroundParser.Singleton.RequestParse(buffer.CurrentSnapshot);
+
             ITextSnapshot newSnapshot = buffer.CurrentSnapshot;
             List<Region> newRegions = new List<Region>();
 
@@ -75,38 +74,26 @@ namespace Papyrus {
             // references to any parent partial regions.
             PartialRegion currentRegion = null;
 
-            TokenScanner parser = new TokenScanner(null);
-            TokenScannerState state = TokenScannerState.Text;
-            ParsedLine parsedLine = new ParsedLine();
-
-            foreach (var line in newSnapshot.Lines) {
-                TokenScannerResult result = parser.ScanSnapshotLine(line, parsedLine);
-
-                if (result == TokenScannerResult.EndSource) {
-                    break;
-                }
-                else if (result == TokenScannerResult.EndLine) {
-                    foreach (TokenType token in parsedLine) {
-                        if (token.IsOutlineableStart(parsedLine)) {
-                            currentRegion = new PartialRegion() {
-                                Outlineable = token,
-                                StartLine = line.LineNumber,
-                                PartialParent = currentRegion,
-                            };
-                            break;
-                        }
-                        else if (currentRegion != null && token.IsOutlineableEnd(currentRegion.Outlineable)) {
-                            newRegions.Add(new Region() {
-                                StartLine = currentRegion.StartLine,
-                                EndLine = line.LineNumber,
-                            });
-
-                            currentRegion = currentRegion.PartialParent;
-                            break;
-                        }
+            foreach (var line in BackgroundParser.Singleton.TokenSnapshot) {
+                foreach (var token in line) {
+                    if (token.Type.IsOutlineableStart(line)) {
+                        currentRegion = new PartialRegion() {
+                            Outlineable = token.Type,
+                            StartLine = newSnapshot.GetLineFromPosition(token.Span.Start.Position).LineNumber,
+                            PartialParent = currentRegion,
+                        };
+                        break;
                     }
+                    else if (currentRegion != null && token.Type.IsOutlineableEnd(currentRegion.Outlineable)) {
+                        newRegions.Add(new Region() {
+                            Outlineable = currentRegion.Outlineable,
+                            StartLine = currentRegion.StartLine,
+                            EndLine = newSnapshot.GetLineFromPosition(token.Span.Start.Position).LineNumber,
+                        });
 
-                    parsedLine.Clear();
+                        currentRegion = currentRegion.PartialParent;
+                        break;
+                    }
                 }
             }
 
@@ -120,17 +107,17 @@ namespace Papyrus {
             // the changed regions are regions that appear in one set or the other, but not both.
             NormalizedSpanCollection removed = NormalizedSpanCollection.Difference(oldSpanCollection, newSpanCollection);
 
-            int changeStart = int.MaxValue;
+            int changeStart = Int32.MaxValue;
             int changeEnd = -1;
 
             if (removed.Count > 0) {
-                changeStart = removed[0].Start;
-                changeEnd = removed[removed.Count - 1].End;
+                changeStart = removed.First().Start;
+                changeEnd = removed.Last().End;
             }
 
             if (newSpans.Count > 0) {
-                changeStart = Math.Min(changeStart, newSpans[0].Start);
-                changeEnd = Math.Max(changeEnd, newSpans[newSpans.Count - 1].End);
+                changeStart = Math.Min(changeStart, newSpans.First().Start);
+                changeEnd = Math.Max(changeEnd, newSpans.Last().Start);
             }
 
             snapshot = newSnapshot;
@@ -138,9 +125,7 @@ namespace Papyrus {
 
             if (changeStart <= changeEnd) {
                 ITextSnapshot snap = snapshot;
-                if (TagsChanged != null) {
-                    TagsChanged(this, new SnapshotSpanEventArgs(new SnapshotSpan(snapshot, Span.FromBounds(changeStart, changeEnd))));
-                }
+                TagsChanged?.Invoke(this, new SnapshotSpanEventArgs(new SnapshotSpan(snapshot, Span.FromBounds(changeStart, changeEnd))));
             }
         }
 
@@ -166,10 +151,9 @@ namespace Papyrus {
         public ITagger<T> CreateTagger<T>(ITextBuffer buffer) where T : ITag {
             //create a single tagger for each buffer.
             Func<ITagger<T>> sc = delegate () {
-                return new Outlining(buffer) as ITagger<T>;
+                return new OutliningTagger(buffer) as ITagger<T>;
             };
             return buffer.Properties.GetOrCreateSingletonProperty(sc);
         }
     }
 } 
-#endif

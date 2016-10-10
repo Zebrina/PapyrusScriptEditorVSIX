@@ -61,68 +61,51 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="Commands\CompileScriptCommand.cs" />
-    <Compile Include="Common\Extensions\CollectionsExtensionMethods.cs" />
+    <Compile Include="Common\CollectionExtended.cs" />
+    <Compile Include="Common\EnumExtended.cs" />
+    <Compile Include="Common\StringBuilderExtended.cs" />
+    <Compile Include="Common\TextSnapshotExtensionMethods.cs" />
     <Compile Include="Common\NativeMethods.cs" />
+    <Compile Include="Common\Proxy.cs" />
     <Compile Include="Common\Singleton.cs" />
-    <Compile Include="Common\Extensions\SnapshotSpanExtensionMethods.cs" />
-    <Compile Include="Common\Extensions\StringsExtensionMethods.cs" />
-    <Compile Include="Features\PapyrusAutoComplete.cs" />
-    <Compile Include="Features\PapyrusAutoCompleteCommandHandler.cs" />
+    <Compile Include="Common\StringsExtensionMethods.cs" />
+    <Compile Include="Features\BackgroundParser.cs" />
+    <Compile Include="Features\BraceMatching.cs" />
+    <Compile Include="Features\StatementCompletion.cs" />
     <Compile Include="Features\Outlining.cs" />
-    <Compile Include="Features\LegacySyntaxColorization.cs" />
-    <Compile Include="Features\PapyrusTextHightlighting.cs" />
-    <Compile Include="Language\BlockCommentTokenScanner.cs" />
-    <Compile Include="Language\Components\ArrayType.cs" />
-    <Compile Include="Language\Components\AutoPropertyMember.cs" />
-    <Compile Include="Language\Components\Comment.cs" />
-    <Compile Include="Language\Components\CreationKitInfo.cs" />
-    <Compile Include="Language\Components\Delimiter.cs" />
+    <Compile Include="Features\TokenHighlighting.cs" />
+    <Compile Include="Language\Components\ParameterList.cs" />
+    <Compile Include="Language\Components\ScriptMemberAttributes.cs" />
+    <Compile Include="Language\Components\VariableDefaultValue.cs" />
+    <Compile Include="Language\Components\VariableType.cs" />
+    <Compile Include="Language\Exceptions\TokenArgumentException.cs" />
+    <Compile Include="Language\ISyntaxParsable.cs" />
+    <Compile Include="Language\Components\Tokens\Comment.cs" />
+    <Compile Include="Language\Components\Tokens\CreationKitDocumentation.cs" />
+    <Compile Include="Language\Components\Tokens\Delimiter.cs" />
     <Compile Include="Language\Components\EventMember.cs" />
     <Compile Include="Language\Components\FieldMember.cs" />
     <Compile Include="Language\Components\FunctionMember.cs" />
-    <Compile Include="Language\Components\Identifier.cs" />
-    <Compile Include="Language\Components\IScriptMember.cs" />
-    <Compile Include="Language\Components\ITokenType.cs" />
-    <Compile Include="Language\Components\Keyword.cs" />
-    <Compile Include="Language\Components\WhiteSpaceTokenScanner.cs" />
-    <Compile Include="Language\DelimiterTokenScanner.cs" />
-    <Compile Include="Language\IdentifierTokenScanner.cs" />
-    <Compile Include="Language\KeywordTokenScanner.cs" />
-    <Compile Include="Language\Components\NumericLiteral.cs" />
-    <Compile Include="Language\Components\Operator.cs" />
+    <Compile Include="Language\Components\Tokens\Identifier.cs" />
+    <Compile Include="Language\IScriptMember.cs" />
+    <Compile Include="Language\Components\Tokens\Keyword.cs" />
+    <Compile Include="Language\Components\TokenSnapshot.cs" />
+    <Compile Include="Language\Components\TokenSnapshotLine.cs" />
+    <Compile Include="Language\Components\Tokens\NumericLiteral.cs" />
+    <Compile Include="Language\Components\Tokens\Operator.cs" />
     <Compile Include="Language\Components\Parameter.cs" />
     <Compile Include="Language\Components\PropertyMember.cs" />
-    <Compile Include="Language\Components\ScriptObject.cs" />
-    <Compile Include="Language\Components\StateMember.cs" />
-    <Compile Include="Language\Components\StringLiteral.cs" />
-    <Compile Include="Language\Components\Token.cs" />
-    <Compile Include="Language\Components\TokenType.cs" />
-    <Compile Include="Language\Components\WhiteSpace.cs" />
-    <Compile Include="Language\Dissecting\AttributesDissector.cs" />
-    <Compile Include="Language\Dissecting\DissectedLine.cs" />
-    <Compile Include="Language\Dissecting\Dissecting.cs" />
-    <Compile Include="Language\Dissecting\EventDissector.cs" />
-    <Compile Include="Language\Dissecting\FunctionDissector.cs" />
-    <Compile Include="Language\Dissecting\ILineDissector.cs" />
-    <Compile Include="Language\Dissecting\ParameterDissector.cs" />
-    <Compile Include="Language\Dissecting\ParameterListDissector.cs" />
-    <Compile Include="Language\Dissecting\PropertyDissector.cs" />
-    <Compile Include="Language\Dissecting\ScriptInfoDissector.cs" />
-    <Compile Include="Language\LineCommentTokenScanner.cs" />
-    <Compile Include="Language\NumericLiteralTokenScanner.cs" />
-    <Compile Include="Language\OperatorTokenScanner.cs" />
+    <Compile Include="Language\Components\Tokens\ScriptObject.cs" />
+    <Compile Include="Language\Components\Tokens\StringLiteral.cs" />
+    <Compile Include="Language\TokenInfo.cs" />
+    <Compile Include="Language\Token.cs" />
     <Compile Include="Language\Parsing\ParsedLine.cs" />
     <Compile Include="Language\Parsing\TokenParser.cs" />
     <Compile Include="Language\ScriptLibrary.cs" />
-    <Compile Include="Language\ScriptObjectTokenScanner.cs" />
     <Compile Include="Language\ScriptParser.cs" />
-    <Compile Include="Language\StringLiteralTokenScanner.cs" />
     <Compile Include="Language\TokenScanner.cs" />
-    <Compile Include="PapyrusAuthoringScope.cs" />
     <Compile Include="PapyrusContentDefinition.cs" />
-    <Compile Include="PapyrusLanguageService.cs" />
     <Compile Include="PapyrusPackage.cs" />
-    <Compile Include="PapyrusScanner.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Features\SyntaxColorization.cs" />
     <Compile Include="Utilities\OutputWindowPane.cs" />
@@ -141,6 +124,7 @@
   <ItemGroup>
     <VSCTCompile Include="Commands\PapyrusPackage.vsct">
       <ResourceName>Menus.ctmenu</ResourceName>
+      <SubType>Designer</SubType>
     </VSCTCompile>
     <Content Include="Commands\Resources\CompileScriptCommand.png" />
     <Content Include="index.html" />
@@ -285,7 +269,10 @@
       <ManifestResourceName>VSPackage</ManifestResourceName>
     </EmbeddedResource>
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <Folder Include="Language\Fallout4\" />
+    <Folder Include="Language\Skyrim\" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Import Project="$(VSToolsPath)\VSSDK\Microsoft.VsSDK.targets" Condition="'$(VSToolsPath)' != ''" />
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">

@@ -1,10 +1,6 @@
 ﻿using Microsoft.VisualStudio.Shell;
 using Papyrus.Common;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Papyrus.Utilities {
     public class OutputWindowPaneManager : Singleton<OutputWindowPaneManager> {

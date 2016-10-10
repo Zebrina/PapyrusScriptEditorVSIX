@@ -5,21 +5,12 @@
 //------------------------------------------------------------------------------
 
 using System;
-using System.ComponentModel.Design;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
-using System.Globalization;
 using System.Runtime.InteropServices;
-using Microsoft.VisualStudio;
-using Microsoft.VisualStudio.OLE.Interop;
 using Microsoft.VisualStudio.Shell;
-using Microsoft.VisualStudio.Shell.Interop;
-using Microsoft.Win32;
 using Papyrus.Utilities;
 using Papyrus.Commands;
-using Papyrus.Language;
-using Microsoft.VisualStudio.Package;
-using Papyrus.Common;
 
 namespace Papyrus {
     /// <summary>
@@ -39,6 +30,7 @@ namespace Papyrus {
     /// To get loaded into VS, the package must be referred by &lt;Asset Type="Microsoft.VisualStudio.VsPackage" ...&gt; in .vsixmanifest file.
     /// </para>
     /// </remarks>
+    [DebuggerStepThrough]
     [PackageRegistration(UseManagedResourcesOnly = true)]
     [InstalledProductRegistration("#110", "#112", "1.0", IconResourceID = 400)] // Info on this package for Help/About
     [Guid(PackageGuidString)]
@@ -57,12 +49,11 @@ namespace Papyrus {
         MatchBraces = false,
         MatchBracesAtCaret = false,
         ShowMatchingBrace = false)]*/
-    //[DebuggerStepThrough]
-    public sealed class PapyrusPackage : Package/*, IOleComponent*/ {
+    public sealed class PapyrusPackage : Package {
         /// <summary>
         /// PapyrusPackage GUID string.
         /// </summary>
-        public const string PackageGuidString = "e003b125-0382-4f64-93f2-f9abd9a5d15c";
+        public const string PackageGuidString = "A4A96C7E-FC50-471C-9626-CE80E0DAC70F";
 
         //uint componentID;
 
@@ -126,58 +117,6 @@ namespace Papyrus {
             // Initialize commands.
             CompileScriptCommand.Initialize(this);
         }
-
-        #endregion
-
-        #region IOleComponent Members
-
-        /*
-        public int FDoIdle(uint grfidlef) {
-            bool bPeriodic = (grfidlef & (uint)_OLEIDLEF.oleidlefPeriodic) != 0;
-            // Use typeof(TestLanguageService) because we need to
-            // reference the GUID for our language service.
-            LanguageService service = GetService(typeof(PapyrusLanguageService)) as LanguageService;
-            if (service != null) {
-                service.OnIdle(bPeriodic);
-            }
-            return 0;
-        }
-
-        public int FContinueMessageLoop(uint uReason, IntPtr pvLoopData, MSG[] pMsgPeeked) {
-            return 1;
-        }
-
-        public int FPreTranslateMessage(MSG[] pMsg) {
-            return 0;
-        }
-
-        public int FQueryTerminate(int fPromptUser) {
-            return 1;
-        }
-
-        public int FReserved1(uint dwReserved, uint message, IntPtr wParam, IntPtr lParam) {
-            return 1;
-        }
-
-        public IntPtr HwndGetWindow(uint dwWhich, uint dwReserved) {
-            return IntPtr.Zero;
-        }
-
-        public void OnActivationChange(IOleComponent pic, int fSameComponent, OLECRINFO[] pcrinfo, int fHostIsActivating, OLECHOSTINFO[] pchostinfo, uint dwReserved) {
-        }
-
-        public void OnAppActivate(int fActive, uint dwOtherThreadID) {
-        }
-
-        public void OnEnterState(uint uStateID, int fEnter) {
-        }
-
-        public void OnLoseActivation() {
-        }
-
-        public void Terminate() {
-        }
-        */
 
         #endregion
     }

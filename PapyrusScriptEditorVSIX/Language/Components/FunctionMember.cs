@@ -1,36 +1,53 @@
-﻿using System;
-using System.Collections;
+﻿using Papyrus.Common;
+using Papyrus.Language.Components.Tokens;
+using System;
 using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace Papyrus.Language.Components {
-    [DebuggerStepThrough]
-    public sealed class FunctionMember : IScriptMember, ICollection<Parameter>, IEnumerable<Parameter> {
-        private TokenType returnType;
+    //[DebuggerStepThrough]
+    public sealed class FunctionMember : IScriptMember, IComparable<IScriptMember>, ICloneable, ISyntaxParsable {
+        private VariableType returnType;
         private string name;
-        private List<Parameter> parameters;
-        private bool global;
-        private bool native;
+        private readonly ParameterList parameters;
+        private ScriptMemberAttributes attributes;
         private string definition;
 
-        public FunctionMember(TokenType returnType, string name, IEnumerable<Parameter> parameters, bool global = false, bool native = false) {
+        /*
+        public FunctionMember(VariableType returnType, string name, IEnumerable<Parameter> parameters, IEnumerable<Keyword> attributes) {
             this.returnType = returnType;
             this.name = name;
-            this.global = global;
-            this.native = native;
-            this.parameters = new List<Parameter>(parameters);
+            this.parameters = new ParameterList(parameters);
+            this.attributes = new ScriptMemberAttributes();
+            this.attributes.AddRange(attributes);
+            this.definition = String.Empty;
         }
-        public FunctionMember(TokenType returnType, string name, bool global = false, bool native = false) :
-            this(returnType, name, new Parameter[0], global, native) {
+        public FunctionMember(VariableType returnType, string name, IEnumerable<Parameter> parameters) :
+            this(returnType, name, parameters, new Keyword[0]) {
         }
-        public FunctionMember(string name, IEnumerable<Parameter> parameters, bool global = false, bool native = false) :
-            this(null, name, parameters, global, native) {
+        public FunctionMember(VariableType returnType, string name, IEnumerable<Keyword> attributes) :
+            this(returnType, name, new Parameter[0], attributes) {
         }
-        public FunctionMember(string name, bool global = false, bool native = false) :
-            this(null, name, new Parameter[0], global, native) {
+        public FunctionMember(string name, IEnumerable<Parameter> parameters, IEnumerable<Keyword> attributes) :
+            this(default(VariableType), name, parameters, attributes) {
+        }
+        public FunctionMember(string name, IEnumerable<Keyword> attributes) :
+            this(default(VariableType), name, new Parameter[0], attributes) {
+        }
+        */
+        private FunctionMember(FunctionMember other) {
+            this.returnType = other.returnType;
+            this.name = other.name;
+            this.parameters = (ParameterList)other.parameters.Clone();
+            this.attributes = other.attributes;
+            this.definition = other.definition;
+        }
+        private FunctionMember() {
+            returnType = default(VariableType);
+            name = String.Empty;
+            parameters = new ParameterList();
+            attributes = default(ScriptMemberAttributes);
+            definition = String.Empty;
         }
 
         public string Name {
@@ -39,43 +56,19 @@ namespace Papyrus.Language.Components {
         public string GetDeclaration() {
             StringBuilder b = new StringBuilder();
 
-            if (returnType != null) {
-                b.Append(returnType.Text);
-                b.Append(' ');
-            }
-
+            b.Append(returnType);
             b.Append(Keyword.Function);
-            b.Append(' ');
+            b.AppendWhiteSpace();
             b.Append(name);
-
-            b.Append(Delimiter.LeftRoundBracket);
-
-            if (parameters.Count > 0) {
-                b.Append(parameters[0]);
-                for (int i = 1; i < parameters.Count; ++i) {
-                    b.Append(", ");
-                    b.Append(parameters[i]);
-                }
-            }
-
-            b.Append(Delimiter.RightRoundBracket);
-
-            if (global) {
-                b.Append(' ');
-                b.Append(Keyword.Global);
-            }
-
-            if (native) {
-                b.Append(' ');
-                b.Append(Keyword.Native);
-            }
+            b.AppendFormat("({0})", parameters);
+            b.Append(attributes);
 
             return b.ToString();
         }
         public string GetDefinition() {
             return definition;
         }
-        bool IScriptMember.ChildAccessible {
+        bool IScriptMember.IsChildAccessible {
             get { return true; }
         }
         IEnumerable<Parameter> IScriptMember.Parameters {
@@ -85,50 +78,64 @@ namespace Papyrus.Language.Components {
             get { return false; }
         }
 
-        public override string ToString() {
-            return GetDeclaration();
+        public int Length {
+            get {
+                int length = returnType.Length + 4 + parameters.Length; // function + <name> + ( + parameters + );
+                if (attributes.Contains(Keyword.Global)) length += 1;
+                if (attributes.Contains(Keyword.Native)) length += 1;
+
+                return length;
+            }
         }
 
-        int IComparable<IScriptMember>.CompareTo(IScriptMember other) {
-            return String.Compare(this.name, other.Name, StringComparison.OrdinalIgnoreCase);
+        public bool TryParse(IReadOnlyList<Token> tokens, int offset) {
+            int remainingCount = tokens.Count - offset;
+            if (remainingCount >= 4) {
+                if (returnType.TryParse(tokens, offset)) {
+                    offset += returnType.Length;
+                }
+
+                remainingCount = tokens.Count - offset;
+                if (remainingCount >= 4 && tokens[offset] == Keyword.Function && tokens[offset + 1].TypeID == TokenTypeID.Identifier && tokens[offset + 2] == Delimiter.LeftRoundBracket) {
+                    name = tokens[offset + 1].Text;
+                    offset += 3;
+
+                    parameters.TryParse(tokens, offset);
+                    offset += parameters.Length;
+
+                    remainingCount = tokens.Count - offset;
+                    if (remainingCount >= 1 && tokens[offset] == Delimiter.RightRoundBracket) {
+                        offset += 1;
+                        attributes.TryParse(tokens, offset);
+
+                        return true;
+                    }
+                }
+            }
+
+            return false;
         }
 
-        int ICollection<Parameter>.Count {
-            get { return parameters.Count; }
-        }
-        bool ICollection<Parameter>.IsReadOnly {
-            get { return ((ICollection<Parameter>)parameters).IsReadOnly; }
+        private static FunctionMember prototype = new FunctionMember();
+        public static bool TryParse(IReadOnlyList<Token> tokens, int offset, out IScriptMember result) {
+            if (prototype.TryParse(tokens, offset)) {
+                result = (FunctionMember)prototype.MemberwiseClone();
+                return true;
+            }
+            result = null;
+            return false;
         }
 
         public int CompareTo(IScriptMember obj) {
             return String.Compare(this.name, obj.Name, StringComparison.OrdinalIgnoreCase);
         }
 
-        void ICollection<Parameter>.Add(Parameter item) {
-            parameters.Add(item);
+        public object Clone() {
+            return new FunctionMember(this);
         }
 
-        bool ICollection<Parameter>.Contains(Parameter item) {
-            return parameters.Contains(item);
-        }
-
-        void ICollection<Parameter>.CopyTo(Parameter[] array, int arrayIndex) {
-            parameters.CopyTo(array, arrayIndex);
-        }
-
-        bool ICollection<Parameter>.Remove(Parameter item) {
-            return parameters.Remove(item);
-        }
-
-        void ICollection<Parameter>.Clear() {
-            parameters.Clear();
-        }
-
-        IEnumerator IEnumerable.GetEnumerator() {
-            return parameters.GetEnumerator();
-        }
-        IEnumerator<Parameter> IEnumerable<Parameter>.GetEnumerator() {
-            return parameters.GetEnumerator();
+        public override string ToString() {
+            return GetDeclaration();
         }
     }
 }

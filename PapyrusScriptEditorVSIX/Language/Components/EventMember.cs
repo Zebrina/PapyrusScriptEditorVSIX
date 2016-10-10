@@ -1,25 +1,35 @@
-﻿using System;
-using System.Collections;
+﻿using Papyrus.Common;
+using Papyrus.Language.Components.Tokens;
+using System;
 using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace Papyrus.Language.Components {
-    [DebuggerStepThrough]
-    public sealed class EventMember : IScriptMember, ICollection<Parameter>, IEnumerable<Parameter> {
-        private List<Parameter> parameters;
-
+    //[DebuggerStepThrough]
+    public sealed class EventMember : IScriptMember, IComparable<IScriptMember>, ICloneable, ISyntaxParsable {
         private string name;
+        private ParameterList parameters;
         private string definition;
 
+        /*
         public EventMember(string name, IEnumerable<Parameter> parameters) {
             this.name = name;
-            this.parameters = new List<Parameter>(parameters);
+            this.parameters = new ParameterList(parameters);
+            this.definition = String.Empty;
         }
         public EventMember(string name) :
             this(name, new Parameter[0]) {
+        }
+        */
+        private EventMember(EventMember other) {
+            this.name = other.name;
+            this.parameters = (ParameterList)other.parameters.Clone();
+            this.definition = other.definition;
+        }
+        private EventMember() {
+            name = String.Empty;
+            parameters = new ParameterList();
+            definition = String.Empty;
         }
 
         public string Name {
@@ -29,19 +39,11 @@ namespace Papyrus.Language.Components {
             StringBuilder b = new StringBuilder();
 
             b.Append(Keyword.Event);
-            b.Append(' ');
+            b.AppendWhiteSpace();
             b.Append(name);
 
             b.Append(Delimiter.LeftRoundBracket);
-
-            if (parameters.Count > 0) {
-                b.Append(parameters[0]);
-                for (int i = 1; i < parameters.Count; ++i) {
-                    b.Append(", ");
-                    b.Append(parameters[i]);
-                }
-            }
-
+            b.Append(parameters);
             b.Append(Delimiter.RightRoundBracket);
 
             return b.ToString();
@@ -49,7 +51,7 @@ namespace Papyrus.Language.Components {
         public string GetDefinition() {
             return definition;
         }
-        bool IScriptMember.ChildAccessible {
+        bool IScriptMember.IsChildAccessible {
             get { return true; }
         }
         IEnumerable<Parameter> IScriptMember.Parameters {
@@ -59,46 +61,46 @@ namespace Papyrus.Language.Components {
             get { return false; }
         }
 
-        public override string ToString() {
-            return GetDeclaration();
+        public int Length {
+            get { return 4 + parameters.Length; } // event + <name> + ( + parameters + )
         }
 
-        int ICollection<Parameter>.Count {
-            get { return parameters.Count; }
-        }
-        bool ICollection<Parameter>.IsReadOnly {
-            get { return ((ICollection<Parameter>)parameters).IsReadOnly; }
+        public bool TryParse(IReadOnlyList<Token> tokens, int offset) {
+            int remainingCount = tokens.Count - offset;
+            if (remainingCount >= 4 && tokens[offset] == Keyword.Function && tokens[offset + 1].TypeID == TokenTypeID.Identifier && tokens[offset + 2] == Delimiter.LeftRoundBracket) {
+                name = tokens[offset + 1].Text;
+
+                offset = 3;
+                parameters.TryParse(tokens, offset + 3);
+                offset += parameters.Length;
+
+                remainingCount = tokens.Count - offset;
+                return remainingCount >= 1 && tokens[offset] == Delimiter.RightRoundBracket;
+            }
+
+            return false;
         }
 
-        public int CompareTo(IScriptMember obj) {
+        private static EventMember prototype = new EventMember();
+        public static bool TryParse(IReadOnlyList<Token> tokens, int offset, out IScriptMember result) {
+            if (prototype.TryParse(tokens, offset)) {
+                result = (EventMember)prototype.MemberwiseClone();
+                return true;
+            }
+            result = null;
+            return false;
+        }
+
+        int IComparable<IScriptMember>.CompareTo(IScriptMember obj) {
             return String.Compare(this.name, obj.Name, StringComparison.OrdinalIgnoreCase);
         }
 
-        void ICollection<Parameter>.Add(Parameter item) {
-            parameters.Add(item);
+        public object Clone() {
+            return new EventMember(this);
         }
 
-        bool ICollection<Parameter>.Contains(Parameter item) {
-            return parameters.Contains(item);
-        }
-
-        void ICollection<Parameter>.CopyTo(Parameter[] array, int arrayIndex) {
-            parameters.CopyTo(array, arrayIndex);
-        }
-
-        bool ICollection<Parameter>.Remove(Parameter item) {
-            return parameters.Remove(item);
-        }
-
-        void ICollection<Parameter>.Clear() {
-            parameters.Clear();
-        }
-
-        IEnumerator IEnumerable.GetEnumerator() {
-            return parameters.GetEnumerator();
-        }
-        IEnumerator<Parameter> IEnumerable<Parameter>.GetEnumerator() {
-            return parameters.GetEnumerator();
+        public override string ToString() {
+            return GetDeclaration();
         }
     }
 }

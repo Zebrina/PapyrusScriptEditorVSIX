@@ -132,7 +132,7 @@ namespace Papyrus.Language.Parsing {
 
             public abstract TokenType ScanForToken(string source, int offset, ref TokenParserState state);
 
-            [DebuggerStepThrough]
+            //[DebuggerStepThrough]
             protected TokenType YieldToNext(string source, int offset, ref TokenParserState state) {
                 return next == null ? null : next.ScanForToken(source, offset, ref state);
             }

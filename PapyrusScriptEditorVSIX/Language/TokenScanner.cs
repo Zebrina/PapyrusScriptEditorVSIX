@@ -1,43 +1,21 @@
 using Microsoft.VisualStudio.Text;
 using Papyrus.Common;
-using Papyrus.Language.Components;
-using Papyrus.Utilities;
+using Papyrus.Language.Components.Tokens;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
-using System.Globalization;
-using System.IO;
-using System.Linq;
-using System.Text;
 
 namespace Papyrus.Language {
-    public abstract class TokenScannerModule {
-        private TokenScannerModule next = null;
-
-        protected abstract bool Scan(SnapshotSpan sourceSnapshotSpan, ref TokenScannerState state, out Token token);
-        public bool Scan(SnapshotSpan sourceSnapshotSpan, ref TokenScannerState state, out Token token) {
-            return Scan(sourceSnapshotSpan, ref state, out token) ||
-                (next != null && next.Scan(sourceSnapshotSpan, ref state, out token));
-        }
-
-        private void Add(TokenScannerModule module) {
-            if (module != null) {
-                if (next == null) {
-                    next = module;
-                }
-                else {
-                    next.Add(module);
-                }
+    public abstract class TokenParser {
+        public bool TryParse(SnapshotSpan sourceSnapshotSpan, ref TokenScannerState state, TokenInfo tokenInfo) {
+            Token token;
+            if (TryParse(sourceSnapshotSpan.GetText(), ref state, out token)) {
+                tokenInfo.Type = token;
+                tokenInfo.Span = new SnapshotSpan(sourceSnapshotSpan.Snapshot, sourceSnapshotSpan.Subspan(0, token.Text.Length));
+                return true;
             }
+            return false;
         }
-
-        public static TokenScannerModule operator +(TokenScannerModule x, TokenScannerModule y) {
-            if (x == null) {
-                return y;
-            }
-            x.Add(y);
-            return x;
-        }
+        public abstract bool TryParse(string sourceTextSpan, ref TokenScannerState state, out Token token);
     }
 
     public enum TokenScannerState {
@@ -48,42 +26,86 @@ namespace Papyrus.Language {
     }
 
     public class TokenScanner {
-        private TokenScannerModule tokenScannerModule;
-        private TokenScannerState state;
-
-        public TokenScanner(TokenScannerModule tokenScannerModule) {
-            this.tokenScannerModule = tokenScannerModule;
-            this.state = TokenScannerState.Text;
-        }
+        private ICollection<TokenParser> handlers = new List<TokenParser>();
+        private TokenScannerState state = TokenScannerState.Text;
 
         public void ForceState(TokenScannerState state) {
             this.state = state;
         }
-
-        public bool ScanLine(ITextSnapshotLine textLine, TokenSnapshotLine tokenLine) {
-            Token token;
-            SnapshotSpan span = textLine.ToSpan();
-            bool eol = false;
-            while (!eol) {
-                span = span.IgnoreWhile();
-                eol = tokenScannerModule.Scan(span, offset, ref state, out token);
-                tokenLine.AddToken(token);
-                span = span.Subspan(token.Span.Length);
-            }
-            return !tokenLine.IsEmpty;
+        public void Reset() {
+            state = TokenScannerState.Text;
         }
-        public bool ScanSource(ITextSnapshot textSource, TokenSnapshot tokenSource) {
-            bool success = true;
-            foreach (var lineIn in textSource.Lines) {
-                TokenSnapshotLine tokenLine = new TokenSnapshotLine();
-                if (ScanLine(lineIn, tokenLine)) {
-                    tokenSource.AddLine(tokenLine);
-                }
-                else {
-                    success = false;
+
+        public static TokenScanner operator +(TokenScanner scanner, TokenParser matcher) {
+            if (scanner != null) {
+                scanner.handlers.Add(matcher);
+            }
+            return scanner;
+        }
+
+        private bool Scan(SnapshotSpan span, ref TokenScannerState state, TokenInfo token) {
+            if (!span.IsEmpty) {
+                foreach (var handler in handlers) {
+                    if (handler.TryParse(span, ref state, token)) {
+                        return true;
+                    }
                 }
             }
-            return success;
+            return false;
+        }
+        public void ScanSpan(SnapshotSpan span, ICollection<TokenInfo> tokenCollection) {
+            while (!span.IsEmpty) {
+                TokenInfo token = new TokenInfo();
+                if (!Scan(span.Ignore(), ref state, token)) {
+                    return;
+                }
+                tokenCollection.Add(token);
+                span = span.Subspan(token.Span.End);
+            }
+        }
+        public void ScanLine(ITextSnapshotLine textLine, ICollection<TokenInfo> tokenCollection) {
+            ScanSpan(textLine.ToSpan(), tokenCollection);
+        }
+
+        private bool Scan(string textSpan, ref TokenScannerState state, out Token token) {
+            if (!String.IsNullOrWhiteSpace(textSpan)) {
+                foreach (var handler in handlers) {
+                    if (handler.TryParse(textSpan, ref state, out token)) {
+                        return true;
+                    }
+                }
+            }
+            token = null;
+            return false;
+        }
+        public void ScanSpan(string textSpan, ICollection<Token> tokenCollection) {
+            while (!String.IsNullOrWhiteSpace(textSpan)) {
+                Token token;
+                textSpan = textSpan.TrimStart('\r', '\n', '\t', ' ');
+                if (!Scan(textSpan, ref state, out token)) {
+                    return;
+                }
+                tokenCollection.Add(token);
+                textSpan = textSpan.Substring(token.Text.Length);
+            }
+        }
+        public void ScanLine(string textLine, ICollection<Token> tokenCollection) {
+            ScanSpan(textLine, tokenCollection);
+        }
+
+        public static TokenScanner IncludeAllParsers() {
+            TokenScanner scanner = new TokenScanner();
+            scanner += new BlockCommentParser();
+            scanner += new CreationKitDocumentationParser();
+            scanner += new LineCommentParser();
+            scanner += new StringLiteralParser();
+            scanner += new NumericLiteralParser();
+            scanner += new OperatorParser();
+            scanner += new DelimiterParser();
+            scanner += new KeywordParser();
+            scanner += new ScriptObjectParser();
+            scanner += new IdentifierParser();
+            return scanner;
         }
     }
 }

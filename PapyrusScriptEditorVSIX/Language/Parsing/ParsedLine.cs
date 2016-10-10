@@ -1,4 +1,5 @@
-﻿using Papyrus.Language.Components;
+﻿#if false
+using Papyrus.Language.Components;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -8,27 +9,27 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace Papyrus.Language.Parsing {
-    public interface IReadOnlyParsedLine : IReadOnlyList<Token> {
+    public interface IReadOnlyParsedLine : IReadOnlyList<TokenInfo> {
         //Token this[int index] { get; }
-        bool Contains(Token item);
+        bool Contains(TokenInfo item);
         //int IndexOf(IToken item);
     }
 
     /// <summary>
     /// Represents a source line that has been parsed and contains a variable number of tokens.
     /// </summary>
-    [DebuggerStepThrough]
-    public sealed class ParsedLine : IReadOnlyParsedLine, ICollection<Token>, IEnumerable<Token> {
-        private List<Token> tokenList;
+    //[DebuggerStepThrough]
+    public sealed class ParsedLine : IReadOnlyParsedLine, ICollection<TokenInfo>, IEnumerable<TokenInfo> {
+        private List<TokenInfo> tokenList;
 
-        private Token TryGetToken(int index) {
+        private TokenInfo TryGetToken(int index) {
             if (index >= 0 && index < tokenList.Count) {
                 return tokenList[index];
             }
-            return Token.Null;
+            return null;
         }
 
-        public Token /*IReadOnlyList<IToken>.*/this[int index] {
+        public TokenInfo /*IReadOnlyList<IToken>.*/this[int index] {
             get { return TryGetToken(index); }
         }
         /*
@@ -44,12 +45,12 @@ namespace Papyrus.Language.Parsing {
         public int Count {
             get { return tokenList.Count; }
         }
-        bool ICollection<Token>.IsReadOnly {
-            get { return ((IList<Token>)tokenList).IsReadOnly; }
+        bool ICollection<TokenInfo>.IsReadOnly {
+            get { return ((IList<TokenInfo>)tokenList).IsReadOnly; }
         }
 
         public ParsedLine() {
-            tokenList = new List<Token>();
+            tokenList = new List<TokenInfo>();
         }
         /*
         public ParsedLine(params Token[] tokens) :
@@ -62,7 +63,7 @@ namespace Papyrus.Language.Parsing {
         }
         */
 
-        public void Add(Token item) {
+        public void Add(TokenInfo item) {
             tokenList.Add(item);
         }
         /*
@@ -71,7 +72,7 @@ namespace Papyrus.Language.Parsing {
         }
         */
 
-        public bool Remove(Token item) {
+        public bool Remove(TokenInfo item) {
             return tokenList.Remove(item);
         }
         /*
@@ -84,13 +85,13 @@ namespace Papyrus.Language.Parsing {
             tokenList.Clear();
         }
 
-        public bool Contains(Token item) {
+        public bool Contains(TokenInfo item) {
             return tokenList.Contains(item);
         }
-        public int IndexOf(Token item) {
+        public int IndexOf(TokenInfo item) {
             return tokenList.IndexOf(item);
         }
-        public int IndexOf(Token item, int offset) {
+        public int IndexOf(TokenInfo item, int offset) {
             for (; offset < tokenList.Count; ++offset) {
                 if (tokenList[offset].Equals(item)) {
                     return offset;
@@ -102,12 +103,13 @@ namespace Papyrus.Language.Parsing {
         public IEnumerator GetEnumerator() {
             return tokenList.GetEnumerator();
         }
-        IEnumerator<Token> IEnumerable<Token>.GetEnumerator() {
+        IEnumerator<TokenInfo> IEnumerable<TokenInfo>.GetEnumerator() {
             return tokenList.GetEnumerator();
         }
 
-        public void CopyTo(Token[] array, int arrayIndex) {
+        public void CopyTo(TokenInfo[] array, int arrayIndex) {
             tokenList.CopyTo(array, arrayIndex);
         }
     }
-}
+} 
+#endif
