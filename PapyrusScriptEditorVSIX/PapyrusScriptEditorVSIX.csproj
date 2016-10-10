@@ -99,8 +99,6 @@
     <Compile Include="Language\Components\Tokens\StringLiteral.cs" />
     <Compile Include="Language\TokenInfo.cs" />
     <Compile Include="Language\Token.cs" />
-    <Compile Include="Language\Parsing\ParsedLine.cs" />
-    <Compile Include="Language\Parsing\TokenParser.cs" />
     <Compile Include="Language\ScriptLibrary.cs" />
     <Compile Include="Language\ScriptParser.cs" />
     <Compile Include="Language\TokenScanner.cs" />
