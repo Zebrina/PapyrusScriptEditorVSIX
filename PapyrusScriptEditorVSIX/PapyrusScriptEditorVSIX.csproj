@@ -61,14 +61,17 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="Commands\CompileScriptCommand.cs" />
+    <Compile Include="Common\Characters.cs" />
     <Compile Include="Common\CollectionExtended.cs" />
+    <Compile Include="Common\DictionaryExtended.cs" />
     <Compile Include="Common\EnumExtended.cs" />
+    <Compile Include="Common\Hash.cs" />
     <Compile Include="Common\StringBuilderExtended.cs" />
     <Compile Include="Common\TextSnapshotExtensionMethods.cs" />
     <Compile Include="Common\NativeMethods.cs" />
-    <Compile Include="Common\Proxy.cs" />
     <Compile Include="Common\Singleton.cs" />
     <Compile Include="Common\StringsExtensionMethods.cs" />
+    <Compile Include="Common\Unsafe.cs" />
     <Compile Include="Features\BackgroundParser.cs" />
     <Compile Include="Features\BraceMatching.cs" />
     <Compile Include="Features\StatementCompletion.cs" />

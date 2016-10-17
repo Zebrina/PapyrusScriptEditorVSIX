@@ -58,7 +58,7 @@ namespace Papyrus.Language.Components {
         }
 
         public IEnumerable<TokenInfo> ParseableTokens {
-            get { return container.Values.Where(t => t.Type.IgnoredInSyntax == false); }
+            get { return container.Values.Where(t => t.Type.IgnoredBySyntax == false); }
         }
 
         public void Add(TokenInfo item) {
@@ -72,6 +72,18 @@ namespace Papyrus.Language.Components {
 
         public bool Contains(TokenInfo item) {
             return container.ContainsKey(item.Span.Start);
+        }
+
+        public bool FindInSpan(SnapshotPoint point, out TokenInfo tokenInfoOut) {
+            foreach (var tokenInfo in container.Values) {
+                if (tokenInfo.Span.Contains(point)) {
+                    tokenInfoOut = tokenInfo;
+                    return true;
+                }
+            }
+
+            tokenInfoOut = null;
+            return false;
         }
 
         void ICollection<TokenInfo>.CopyTo(TokenInfo[] array, int arrayIndex) {

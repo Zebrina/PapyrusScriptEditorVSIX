@@ -1,5 +1,6 @@
 ﻿using Microsoft.VisualStudio.Text.Classification;
 using Microsoft.VisualStudio.Utilities;
+using Papyrus.Common;
 using Papyrus.Features;
 using System;
 using System.ComponentModel.Composition;
@@ -45,7 +46,7 @@ namespace Papyrus.Language.Components.Tokens {
             get { return TokenTypeID.String; }
         }
 
-        public override bool CompileTimeConstant {
+        public override bool IsCompileTimeConstant {
             get { return true; }
         }
 
@@ -98,8 +99,8 @@ namespace Papyrus.Language.Components.Tokens {
         */
         public override bool TryParse(string sourceTextSpan, ref TokenScannerState state, out Token token) {
             if (state == TokenScannerState.Text) {
-                if (sourceTextSpan.FirstOrDefault() == (char)Delimiter.QuotationMark) {
-                    int length = Delimiter.FindNext(sourceTextSpan, 1, Delimiter.QuotationMark);
+                if (sourceTextSpan.FirstOrDefault() == Characters.QuotationMark) {
+                    int length = Delimiter.FindNext(sourceTextSpan, 1, Characters.QuotationMark);
                     token = new StringLiteral(sourceTextSpan.Substring(1, Math.Min(length, sourceTextSpan.Length) - 1));
                     return true;
                 }

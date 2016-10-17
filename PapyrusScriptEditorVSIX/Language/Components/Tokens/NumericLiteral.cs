@@ -1,5 +1,6 @@
 ﻿using Microsoft.VisualStudio.Text.Classification;
 using Microsoft.VisualStudio.Utilities;
+using Papyrus.Common;
 using Papyrus.Features;
 using System;
 using System.ComponentModel.Composition;
@@ -45,7 +46,7 @@ namespace Papyrus.Language.Components.Tokens {
             get { return TokenTypeID.NumericLiteral; }
         }
 
-        public override bool CompileTimeConstant {
+        public override bool IsCompileTimeConstant {
             get { return true; }
         }
 
@@ -80,11 +81,12 @@ namespace Papyrus.Language.Components.Tokens {
         }
 
         public static NumericLiteral Parse(string source) {
+            int length;
             if (!String.IsNullOrWhiteSpace(source)) {
-                if (TryParseInteger(source) ||
-                    TryParseHexNumber(source) ||
-                    TryParseFloat(source)) {
-                    return new NumericLiteral(source);
+                if (TryParseHexNumber(source, out length) ||
+                    TryParseFloat(source, out length) ||
+                    TryParseInteger(source, out length)) {
+                    return new NumericLiteral(length == source.Length ? source : source.Remove(length));
                 }
             }
             return null;
@@ -94,142 +96,48 @@ namespace Papyrus.Language.Components.Tokens {
         private const string HexNumberDigits = IntegerDigits + "aAbBcCdDeEfF";
         private const string HexNumberIdentifier = "xX";
 
-        private enum IntegerParseState {
-            Negative,
-            FirstDigit,
-            AdditionalDigits,
-        }
-        private static bool TryParseInteger(string source) {
-            IntegerParseState state = IntegerParseState.Negative;
-            bool result = source.All(c => {
-                switch (state) {
-                    case IntegerParseState.Negative:
-                        if (c == '-') {
-                            state = IntegerParseState.FirstDigit;
-                            return true;
-                        }
-                        state = IntegerParseState.AdditionalDigits;
-                        return IntegerDigits.Contains(c);
-
-                    case IntegerParseState.FirstDigit:
-                        state = IntegerParseState.AdditionalDigits;
-                        return IntegerDigits.Contains(c);
-
-                    case IntegerParseState.AdditionalDigits:
-                        return IntegerDigits.Contains(c);
-
-                    default:
-                        return false;
+        private static bool TryParseInteger(string source, out int length) {
+            bool negative = source.StartsWith("-");
+            for (length = negative ? 1 : 0; length < source.Length; ++length) {
+                if (!IntegerDigits.Contains(source[length])) {
+                    break;
                 }
-            });
-
-            return result && state == IntegerParseState.AdditionalDigits;
+            }
+            return length > (negative ? 1 : 0);
         }
 
-        private enum HexNumberParseState {
-            Zero,
-            HexIdentifier,
-            HexDigitAfter,
-            AdditionalHexDigits,
-        }
-        private static bool TryParseHexNumber(string source) {
-            HexNumberParseState state = HexNumberParseState.Zero;
-            bool result = source.All(c => {
-                switch (state) {
-                    case HexNumberParseState.Zero:
-                        state = HexNumberParseState.HexIdentifier;
-                        return c == '0';
-
-                    case HexNumberParseState.HexIdentifier:
-                        state = HexNumberParseState.HexDigitAfter;
-                        return HexNumberIdentifier.Contains(c);
-
-                    case HexNumberParseState.HexDigitAfter:
-                        state = HexNumberParseState.AdditionalHexDigits;
-                        return HexNumberDigits.Contains(c);
-
-                    case HexNumberParseState.AdditionalHexDigits:
-                        return HexNumberDigits.Contains(c);
-
-                    default:
-                        return false;
+        private static bool TryParseHexNumber(string source, out int length) {
+            if (source.StartsWith("0x", StringComparison.OrdinalIgnoreCase)) {
+                for (length = 2; length < source.Length; ++length) {
+                    if (!HexNumberDigits.Contains(source[length])) {
+                        break;
+                    }
                 }
-            });
-
-            return result && state == HexNumberParseState.AdditionalHexDigits;
+                return length > 2;
+            }
+            length = 0;
+            return false;
         }
 
-        private enum FloatParseState {
-            FirstCharacter,
-            DigitBefore,
-            DecimalPoint,
-            DigitAfter,
-            AdditionalDigits,
-
-        }
-        private static bool TryParseFloat(string source) {
-            FloatParseState state = FloatParseState.FirstCharacter;
-            bool result = source.All(c => {
-                switch (state) {
-                    case FloatParseState.FirstCharacter:
-                        if (c == '-') {
-                            state = FloatParseState.DigitBefore;
-                            return true;
-                        }
-                        state = FloatParseState.DecimalPoint;
-                        return IntegerDigits.Contains(c);
-
-                    case FloatParseState.DigitBefore:
-                        state = FloatParseState.DecimalPoint;
-                        return IntegerDigits.Contains(c);
-
-                    case FloatParseState.DecimalPoint:
-                        if (c == '.') {
-                            state = FloatParseState.DigitAfter;
-                            return true;
-                        }
-                        return IntegerDigits.Contains(c);
-
-                    case FloatParseState.DigitAfter:
-                        if (IntegerDigits.Contains(c)) {
-                            state = FloatParseState.AdditionalDigits;
-                            return true;
-                        }
-                        return false;
-
-                    case FloatParseState.AdditionalDigits:
-                        return IntegerDigits.Contains(c);
-
-                    default:
-                        return false;
+        private static bool TryParseFloat(string source, out int length) {
+            bool negative = source.StartsWith("-");
+            bool decimalPoint = false;
+            for (length = negative ? 1 : 0; length < source.Length; ++length) {
+                if (!decimalPoint && length > (negative ? 1 : 0) && source[length] == '.') {
+                    decimalPoint = true;
                 }
-            });
-
-            return result && state == FloatParseState.AdditionalDigits;
+                else if (!IntegerDigits.Contains(source[length])) {
+                    break;
+                }
+            }
+            return length >= (negative ? 4 : 3);
         }
     }
 
     internal sealed class NumericLiteralParser : TokenParser {
-        /*
-        public bool TryParse(SnapshotSpan sourceSnapshotSpan, ref TokenScannerState state, TokenInfo token) {
-            if (state == TokenScannerState.Text) {
-                string text = sourceSnapshotSpan.GetText();
-                int length = Delimiter.FindNextExcluding(text, 0, Delimiter.FullStop);
-                NumericLiteral numericLiteral = NumericLiteral.Parse(text.Substring(0, length));
-                if (numericLiteral != null) {
-                    token.Type = numericLiteral;
-                    token.Span = sourceSnapshotSpan.Subspan(0, length);
-                    return true;
-                }
-            }
-
-            return false;
-        }
-        */
         public override bool TryParse(string sourceTextSpan, ref TokenScannerState state, out Token token) {
             if (state == TokenScannerState.Text) {
-                int length = Delimiter.FindNextExcluding(sourceTextSpan, sourceTextSpan.First() == Delimiter.Hyphen ? 1 : 0, Delimiter.FullStop);
-                NumericLiteral numericLiteral = NumericLiteral.Parse(sourceTextSpan.Substring(0, length));
+                NumericLiteral numericLiteral = NumericLiteral.Parse(sourceTextSpan);
                 if (numericLiteral != null) {
                     token = numericLiteral;
                     return true;

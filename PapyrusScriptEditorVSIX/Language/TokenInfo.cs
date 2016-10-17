@@ -1,6 +1,8 @@
 ﻿using Microsoft.VisualStudio.Text;
+using System.Diagnostics;
 
 namespace Papyrus.Language {
+    [DebuggerStepThrough]
     public sealed class TokenInfo {
         public Token Type { get; set; }
         public SnapshotSpan Span { get; set; }

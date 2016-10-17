@@ -38,23 +38,19 @@ namespace Papyrus.Features {
         private ITextView View { get; set; }
         private ITextBuffer SourceBuffer { get; set; }
         private SnapshotPoint? CurrentChar { get; set; }
-        private Dictionary<char, char> m_braceList;
 
         internal BraceMatchingTagger(ITextView view, ITextBuffer sourceBuffer) {
-            //here the keys are the open braces, and the values are the close braces
-            m_braceList = new Dictionary<char, char>();
-            m_braceList.Add('{', '}');
-            m_braceList.Add('[', ']');
-            m_braceList.Add('(', ')');
             this.View = view;
             this.SourceBuffer = sourceBuffer;
             this.CurrentChar = null;
             this.View.Caret.PositionChanged += CaretPositionChanged;
+            BackgroundParser.Singleton.RequestParse(view.TextSnapshot);
             this.View.LayoutChanged += ViewLayoutChanged;
         }
 
         void ViewLayoutChanged(object sender, TextViewLayoutChangedEventArgs e) {
             if (e.NewSnapshot != e.OldSnapshot) {
+                BackgroundParser.Singleton.RequestParse(e.NewSnapshot);
                 UpdateAtCaretPosition(View.Caret.Position);
             }
         }
@@ -65,11 +61,9 @@ namespace Papyrus.Features {
         void UpdateAtCaretPosition(CaretPosition caretPosition) {
             CurrentChar = caretPosition.Point.GetPoint(SourceBuffer, caretPosition.Affinity);
 
-            if (!CurrentChar.HasValue) {
-                return;
+            if (CurrentChar.HasValue) {
+                TagsChanged?.Invoke(this, new SnapshotSpanEventArgs(new SnapshotSpan(SourceBuffer.CurrentSnapshot, 0, SourceBuffer.CurrentSnapshot.Length)));
             }
-
-            TagsChanged?.Invoke(this, new SnapshotSpanEventArgs(new SnapshotSpan(SourceBuffer.CurrentSnapshot, 0, SourceBuffer.CurrentSnapshot.Length)));
         }
 
         public IEnumerable<ITagSpan<BraceMatchingTag>> GetTags(NormalizedSnapshotSpanCollection spans) {
@@ -88,133 +82,58 @@ namespace Papyrus.Features {
                 currentChar = currentChar.TranslateTo(spans[0].Snapshot, PointTrackingMode.Positive);
             }
 
-            //get the current char and the previous char
-            char currentText = currentChar.GetChar();
-            SnapshotPoint lastChar = currentChar == 0 ? currentChar : currentChar - 1; //if currentChar is 0 (beginning of buffer), don't move it back
-            char lastText = lastChar.GetChar();
-            SnapshotSpan pairSpan = new SnapshotSpan();
+            SnapshotPoint previousChar = currentChar - 1;
 
-            if (m_braceList.ContainsKey(currentText))   //the key is the open brace
-            {
-                char closeChar;
-                m_braceList.TryGetValue(currentText, out closeChar);
-                if (FindMatchingCloseChar(currentChar, currentText, closeChar, View.TextViewLines.Count, out pairSpan) == true) {
-                    yield return new TagSpan<BraceMatchingTag>(new SnapshotSpan(currentChar, 1), new BraceMatchingTag());
-                    yield return new TagSpan<BraceMatchingTag>(pairSpan, new BraceMatchingTag());
+            IReadOnlyTokenSnapshot parsedSnapshot = BackgroundParser.Singleton.TokenSnapshot;
+            if (parsedSnapshot != null) {
+                IReadOnlyTokenSnapshotLine parsedLine;
+
+                try {
+                    parsedLine = parsedSnapshot.Single(l => {
+                        return l.BaseTextSnapshotLine.Extent.Contains(currentChar) ||
+                        (currentChar > 0 && l.BaseTextSnapshotLine.Extent.Contains(previousChar));
+                    });
                 }
-            }
-            else if (m_braceList.ContainsValue(lastText))    //the value is the close brace, which is the *previous* character 
-            {
-                var open = from n in m_braceList
-                           where n.Value.Equals(lastText)
-                           select n.Key;
-                if (FindMatchingOpenChar(lastChar, open.ElementAt(0), lastText, View.TextViewLines.Count, out pairSpan) == true) {
-                    yield return new TagSpan<BraceMatchingTag>(new SnapshotSpan(lastChar, 1), new BraceMatchingTag());
-                    yield return new TagSpan<BraceMatchingTag>(pairSpan, new BraceMatchingTag());
+                catch (InvalidOperationException e) {
+                    yield break;
+                }
+
+                TokenInfo openingToken = parsedLine.SingleOrDefault(t => t.Span.Contains(currentChar));
+                TokenInfo closingToken = parsedLine.SingleOrDefault(t => t.Span.Contains(previousChar));
+
+                if (openingToken != null && openingToken.Type.IsOpeningBracer) {
+                    SnapshotSpan matchedSpan;
+                    if (FindMatchingSpan(parsedLine, openingToken, out matchedSpan)) {
+                        yield return new TagSpan<BraceMatchingTag>(openingToken.Span, new BraceMatchingTag());
+                        yield return new TagSpan<BraceMatchingTag>(matchedSpan, new BraceMatchingTag());
+                    }
+                }
+                else if (closingToken != null && closingToken.Type.IsClosingBracer) {
+                    SnapshotSpan matchedSpan;
+                    if (FindMatchingSpan(parsedLine.Reverse(), closingToken, out matchedSpan)) {
+                        yield return new TagSpan<BraceMatchingTag>(matchedSpan, new BraceMatchingTag());
+                        yield return new TagSpan<BraceMatchingTag>(closingToken.Span, new BraceMatchingTag());
+                    }
                 }
             }
         }
 
-        private static bool FindMatchingCloseChar(IReadOnlyTokenSnapshotLine line, TokenInfo token, out SnapshotSpan pairSpan) {
-            pairSpan = default(SnapshotSpan);
-            return false;
-        }
-        private static bool FindMatchingCloseChar(SnapshotPoint startPoint, char open, char close, int maxLines, out SnapshotSpan pairSpan) {
-            pairSpan = new SnapshotSpan(startPoint.Snapshot, 1, 1);
-            ITextSnapshotLine line = startPoint.GetContainingLine();
-            string lineText = line.GetText();
-            int lineNumber = line.LineNumber;
-            int offset = startPoint.Position - line.Start.Position + 1;
-
-            int stopLineNumber = startPoint.Snapshot.LineCount - 1;
-            if (maxLines > 0)
-                stopLineNumber = Math.Min(stopLineNumber, lineNumber + maxLines);
-
-            int openCount = 0;
-            while (true) {
-                //walk the entire line
-                while (offset < line.Length) {
-                    char currentChar = lineText[offset];
-                    if (currentChar == close) //found the close character
-                    {
-                        if (openCount > 0) {
-                            openCount--;
-                        }
-                        else    //found the matching close
-                        {
-                            pairSpan = new SnapshotSpan(startPoint.Snapshot, line.Start + offset, 1);
-                            return true;
-                        }
-                    }
-                    else if (currentChar == open) // this is another open
-                    {
-                        openCount++;
-                    }
-                    offset++;
+        private static bool FindMatchingSpan(IEnumerable<TokenInfo> line, TokenInfo matchWith, out SnapshotSpan matchedSpan) {
+            int stackedCount = 0;
+            foreach (TokenInfo tokenInfo in line.SkipWhile(t => !ReferenceEquals(t, matchWith))) {
+                if (tokenInfo.Type == matchWith.Type) {
+                    // First token is the bracer we are trying to match so (stackedCount >= 1) always apply.
+                    ++stackedCount;
                 }
-
-                //move on to the next line
-                if (++lineNumber > stopLineNumber)
-                    break;
-
-                line = line.Snapshot.GetLineFromLineNumber(lineNumber);
-                lineText = line.GetText();
-                offset = 0;
-            }
-
-            return false;
-        }
-        private static bool FindMatchingOpenChar(SnapshotPoint startPoint, char open, char close, int maxLines, out SnapshotSpan pairSpan) {
-            pairSpan = new SnapshotSpan(startPoint, startPoint);
-
-            ITextSnapshotLine line = startPoint.GetContainingLine();
-
-            int lineNumber = line.LineNumber;
-            int offset = startPoint - line.Start - 1; //move the offset to the character before this one
-
-            //if the offset is negative, move to the previous line
-            if (offset < 0) {
-                line = line.Snapshot.GetLineFromLineNumber(--lineNumber);
-                offset = line.Length - 1;
-            }
-
-            string lineText = line.GetText();
-
-            int stopLineNumber = 0;
-            if (maxLines > 0)
-                stopLineNumber = Math.Max(stopLineNumber, lineNumber - maxLines);
-
-            int closeCount = 0;
-
-            while (true) {
-                // Walk the entire line
-                while (offset >= 0) {
-                    char currentChar = lineText[offset];
-
-                    if (currentChar == open) {
-                        if (closeCount > 0) {
-                            closeCount--;
-                        }
-                        else // We've found the open character
-                        {
-                            pairSpan = new SnapshotSpan(line.Start + offset, 1); //we just want the character itself
-                            return true;
-                        }
+                else if (tokenInfo.Type.MatchesWithBracer(matchWith.Type)) {
+                    if (--stackedCount == 0) {
+                        matchedSpan = tokenInfo.Span;
+                        return true;
                     }
-                    else if (currentChar == close) {
-                        closeCount++;
-                    }
-                    offset--;
                 }
-
-                // Move to the previous line
-                if (--lineNumber < stopLineNumber)
-                    break;
-
-                line = line.Snapshot.GetLineFromLineNumber(lineNumber);
-                lineText = line.GetText();
-                offset = line.Length - 1;
             }
+
+            matchedSpan = default(SnapshotSpan);
             return false;
         }
     }

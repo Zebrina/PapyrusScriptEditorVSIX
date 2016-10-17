@@ -1,5 +1,6 @@
 ﻿using Microsoft.VisualStudio.Text.Classification;
 using Microsoft.VisualStudio.Utilities;
+using Papyrus.Common;
 using Papyrus.Features;
 using System;
 using System.ComponentModel.Composition;
@@ -50,7 +51,7 @@ namespace Papyrus.Language.Components.Tokens {
             get { return TokenTypeID.Comment; }
         }
 
-        public override bool IgnoredInSyntax {
+        public override bool IgnoredBySyntax {
             get { return true; }
         }
 
@@ -76,7 +77,7 @@ namespace Papyrus.Language.Components.Tokens {
         */
         public override bool TryParse(string sourceTextSpan, ref TokenScannerState state, out Token token) {
             if (state == TokenScannerState.Text) {
-                if (sourceTextSpan.First() == (char)Delimiter.SemiColon) {
+                if (sourceTextSpan.First() == Characters.SemiColon) {
                     token = new Comment(sourceTextSpan, false);
                     return true;
                 }

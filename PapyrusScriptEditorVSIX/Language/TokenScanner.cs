@@ -3,8 +3,10 @@ using Papyrus.Common;
 using Papyrus.Language.Components.Tokens;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 
 namespace Papyrus.Language {
+    //[DebuggerStepThrough]
     public abstract class TokenParser {
         public bool TryParse(SnapshotSpan sourceSnapshotSpan, ref TokenScannerState state, TokenInfo tokenInfo) {
             Token token;
@@ -25,6 +27,7 @@ namespace Papyrus.Language {
         ParameterList,
     }
 
+    //[DebuggerStepThrough]
     public class TokenScanner {
         private ICollection<TokenParser> handlers = new List<TokenParser>();
         private TokenScannerState state = TokenScannerState.Text;
@@ -64,7 +67,7 @@ namespace Papyrus.Language {
             }
         }
         public void ScanLine(ITextSnapshotLine textLine, ICollection<TokenInfo> tokenCollection) {
-            ScanSpan(textLine.ToSpan(), tokenCollection);
+            ScanSpan(textLine.Extent, tokenCollection);
         }
 
         private bool Scan(string textSpan, ref TokenScannerState state, out Token token) {
@@ -86,7 +89,7 @@ namespace Papyrus.Language {
                     return;
                 }
                 tokenCollection.Add(token);
-                textSpan = textSpan.Substring(token.Text.Length);
+                textSpan = textSpan.Remove(0, token.Text.Length);
             }
         }
         public void ScanLine(string textLine, ICollection<Token> tokenCollection) {

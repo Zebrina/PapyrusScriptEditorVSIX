@@ -21,28 +21,30 @@ namespace Papyrus.Features {
             }
         }
 
-        private static TokenScanner scanner = TokenScanner.IncludeAllParsers();
-
         private ITextSnapshot lastParsedSnapshot = null;
         private TokenSnapshot resultTokenSnapshot = null;
+        private object parseLock = new object();
 
         public IReadOnlyTokenSnapshot TokenSnapshot {
             get { return resultTokenSnapshot; }
         }
 
         public void RequestParse(ITextSnapshot snapshot) {
-            lock (scanner) {
-                if (snapshot != lastParsedSnapshot) {
-                    resultTokenSnapshot = new TokenSnapshot();
-                    List<TokenInfo> tokens = new List<TokenInfo>();
-                    foreach (var line in snapshot.Lines) {
-                        scanner.ScanLine(line, tokens);
-                        if (tokens.Count > 0 && tokens.Last().Type.ExtendsLine == false) {
-                            resultTokenSnapshot.Add(new TokenSnapshotLine(line, tokens));
-                            tokens.Clear();
+            if (snapshot != lastParsedSnapshot) {
+                lock (parseLock) {
+                    if (snapshot != lastParsedSnapshot) {
+                        TokenScanner scanner = TokenScanner.IncludeAllParsers();
+                        resultTokenSnapshot = new TokenSnapshot(snapshot);
+                        List<TokenInfo> tokens = new List<TokenInfo>();
+                        foreach (var line in snapshot.Lines) {
+                            scanner.ScanLine(line, tokens);
+                            if (tokens.Count > 0 && tokens.Last().Type.ExtendsLine == false) {
+                                resultTokenSnapshot.Add(new TokenSnapshotLine(line, tokens));
+                                tokens.Clear();
+                            }
                         }
+                        lastParsedSnapshot = snapshot;
                     }
-                    lastParsedSnapshot = snapshot;
                 }
             }
         }

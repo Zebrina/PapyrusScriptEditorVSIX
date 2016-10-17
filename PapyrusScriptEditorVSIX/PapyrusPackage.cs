@@ -30,25 +30,12 @@ namespace Papyrus {
     /// To get loaded into VS, the package must be referred by &lt;Asset Type="Microsoft.VisualStudio.VsPackage" ...&gt; in .vsixmanifest file.
     /// </para>
     /// </remarks>
-    [DebuggerStepThrough]
     [PackageRegistration(UseManagedResourcesOnly = true)]
     [InstalledProductRegistration("#110", "#112", "1.0", IconResourceID = 400)] // Info on this package for Help/About
     [Guid(PackageGuidString)]
     [SuppressMessage("StyleCop.CSharp.DocumentationRules", "SA1650:ElementDocumentationMustBeSpelledCorrectly", Justification = "pkgdef, VS and vsixmanifest are valid VS terms")]
     [ProvideMenuResource("Menus.ctmenu", 1)]
-    //[ProvideService(typeof(PapyrusLanguageService), ServiceName = "Papyrus Language Service")]
-    //[ProvideOptionPage(typeof(OptionPathsPageGrid), OptionsCategoryName, OptionsPathsPageName, 0, 0, true)]
-    //[ProvideOptionPage(typeof(OptionFormattingPageGrid), OptionsCategoryName, OptionsFormattingPageName, 0, 0, true)]
-    //[ProvideLanguageExtension(typeof(PapyrusLanguageService), PapyrusContentDefinition.FileExtension)]
-    /*[ProvideLanguageService(typeof(PapyrusLanguageService), "Papyrus", 106,
-        RequestStockColors = false,
-        EnableAsyncCompletion = true,
-        CodeSense = false,
-        EnableAsyncCompletion = false,
-        AutoOutlining = false,
-        MatchBraces = false,
-        MatchBracesAtCaret = false,
-        ShowMatchingBrace = false)]*/
+    [DebuggerStepThrough]
     public sealed class PapyrusPackage : Package {
         /// <summary>
         /// PapyrusPackage GUID string.

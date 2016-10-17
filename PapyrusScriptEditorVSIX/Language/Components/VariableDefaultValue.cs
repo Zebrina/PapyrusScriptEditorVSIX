@@ -8,7 +8,7 @@ namespace Papyrus.Language.Components {
         public Token DefaultValue { get; private set; }
 
         public VariableDefaultValue(Token defaultValue) {
-            if (!defaultValue.CompileTimeConstant) {
+            if (!defaultValue.IsCompileTimeConstant) {
                 throw new TokenArgumentException(TokenArgumentExceptionType.NotCompileTimeConstant, defaultValue, "defaultValue");
             }
 
@@ -24,7 +24,7 @@ namespace Papyrus.Language.Components {
         }
 
         public bool TryParse(IReadOnlyList<Token> tokens, int offset) {
-            if (tokens.Count - offset >= 2 && tokens[offset] == Operator.BasicAssignment && tokens[offset + 1].CompileTimeConstant) {
+            if (tokens.Count - offset >= 2 && tokens[offset] == Operator.BasicAssignment && tokens[offset + 1].IsCompileTimeConstant) {
                 DefaultValue = tokens[offset + 1];
             }
             return true;

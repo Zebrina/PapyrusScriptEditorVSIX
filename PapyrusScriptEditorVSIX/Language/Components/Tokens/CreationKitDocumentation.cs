@@ -1,5 +1,6 @@
 ﻿using Microsoft.VisualStudio.Text.Classification;
 using Microsoft.VisualStudio.Utilities;
+using Papyrus.Common;
 using Papyrus.Features;
 using System.ComponentModel.Composition;
 using System.Diagnostics;
@@ -44,7 +45,7 @@ namespace Papyrus.Language.Components.Tokens {
             get { return TokenTypeID.CreationKitInfo; }
         }
 
-        public override bool IgnoredInSyntax {
+        public override bool IgnoredBySyntax {
             get { return true; }
         }
 
@@ -96,8 +97,8 @@ namespace Papyrus.Language.Components.Tokens {
         public override bool TryParse(string sourceTextSpan, ref TokenScannerState state, out Token token) {
             int endOffset, length;
             if (state == TokenScannerState.Text) {
-                if (sourceTextSpan.FirstOrDefault() == (char)Delimiter.LeftCurlyBracket) {
-                    endOffset = sourceTextSpan.IndexOf((char)Delimiter.RightCurlyBracket, 1);
+                if (sourceTextSpan.FirstOrDefault() == Characters.LeftCurlyBracket) {
+                    endOffset = sourceTextSpan.IndexOf(Characters.RightCurlyBracket, 1);
                     if (endOffset == -1) {
                         state = TokenScannerState.Documentation;
                         token = new CreationKitDocumentation(sourceTextSpan);
@@ -110,7 +111,7 @@ namespace Papyrus.Language.Components.Tokens {
                 }
             }
             else if (state == TokenScannerState.BlockComment) {
-                endOffset = sourceTextSpan.IndexOf((char)Delimiter.RightCurlyBracket);
+                endOffset = sourceTextSpan.IndexOf(Characters.RightCurlyBracket);
                 if (endOffset == -1) {
                     token = new CreationKitDocumentation(sourceTextSpan);
                 }

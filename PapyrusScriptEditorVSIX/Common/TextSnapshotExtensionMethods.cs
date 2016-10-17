@@ -3,12 +3,14 @@ using System;
 using System.Diagnostics;
 
 namespace Papyrus.Common {
+    /*
     [DebuggerStepThrough]
     internal static class TextSnapshotLineExtensionMethods {
         public static SnapshotSpan ToSpan(this ITextSnapshotLine line) {
             return new SnapshotSpan(line.Start, line.End);
         }
     }
+    */
 
     [DebuggerStepThrough]
     internal static class SnapshotSpanExtensionMethods {

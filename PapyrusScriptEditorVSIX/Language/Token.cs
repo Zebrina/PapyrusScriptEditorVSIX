@@ -36,10 +36,13 @@ namespace Papyrus.Language {
             get { return IndentBehavior.DoNothing; }
         }
 
-        public virtual bool IsOpeningBracer() {
-            return false;
+        public virtual bool IsOpeningBracer {
+            get { return false; }
         }
-        public virtual bool IsClosingBracer(Token openingBracer) {
+        public virtual bool IsClosingBracer {
+            get { return false; }
+        }
+        public virtual bool MatchesWithBracer(Token otherBracer) {
             return false;
         }
 
@@ -50,7 +53,7 @@ namespace Papyrus.Language {
             return false;
         }
 
-        public virtual bool CompileTimeConstant {
+        public virtual bool IsCompileTimeConstant {
             get { return false; }
         }
         public virtual bool IsVariableType {
@@ -59,7 +62,7 @@ namespace Papyrus.Language {
         public virtual bool ExtendsLine {
             get { return false; }
         }
-        public virtual bool IgnoredInSyntax {
+        public virtual bool IgnoredBySyntax {
             get { return false; }
         }
 

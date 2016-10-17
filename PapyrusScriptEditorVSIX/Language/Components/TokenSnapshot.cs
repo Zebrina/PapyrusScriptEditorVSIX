@@ -1,4 +1,5 @@
 using Microsoft.VisualStudio.Text;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -20,8 +21,13 @@ namespace Papyrus.Language.Components {
 
         private SortedList<ITextSnapshotLine, TokenSnapshotLine> container;
 
-        public TokenSnapshot() {
-            container = new SortedList<ITextSnapshotLine, TokenSnapshotLine>(new KeyComparer());
+        public ITextSnapshot BaseTextSnapshot { get; private set; }
+
+        public TokenSnapshot(ITextSnapshot baseTextSnapshot) {
+            if (baseTextSnapshot == null) throw new ArgumentNullException("baseTextSnapshot");
+
+            this.container = new SortedList<ITextSnapshotLine, TokenSnapshotLine>(new KeyComparer());
+            this.BaseTextSnapshot = baseTextSnapshot;
         }
 
         public TokenSnapshotLine this[int position] {
@@ -57,7 +63,7 @@ namespace Papyrus.Language.Components {
         }
 
         public void Add(TokenSnapshotLine item) {
-            if (item != null && item.BaseTextSnapshotLine != null && item.Count > 0) {
+            if (item != null && item.BaseTextSnapshotLine.Snapshot == BaseTextSnapshot && item.Count > 0) {
                 container.Add(item.BaseTextSnapshotLine, item);
             }
         }

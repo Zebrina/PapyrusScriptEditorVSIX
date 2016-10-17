@@ -293,7 +293,7 @@ namespace Papyrus.Language.Components.Tokens {
             return false;
         }
 
-        public override bool CompileTimeConstant {
+        public override bool IsCompileTimeConstant {
             get { return attributes.HasFlag(KeywordAttribute.CompileTimeConstant); }
         }
 
@@ -338,12 +338,14 @@ namespace Papyrus.Language.Components.Tokens {
             return x as Keyword != y;
         }
 
-        public static Keyword Parse(string source, int offset, int length) {
-            KeywordID id;
-            Keyword keyword;
-            if (Enum.TryParse(source.Substring(offset, length), true, out id) &&
-                allKeywords.TryGetValue(id, out keyword)) {
-                return keyword;
+        public static Keyword Parse(string token) {
+            if (token.All(c => Char.IsLetter(c))) {
+                KeywordID id;
+                Keyword keyword;
+                if (Enum.TryParse(token, true, out id) &&
+                    allKeywords.TryGetValue(id, out keyword)) {
+                    return keyword;
+                }
             }
             return null;
         }
@@ -367,7 +369,8 @@ namespace Papyrus.Language.Components.Tokens {
         */
         public override bool TryParse(string sourceTextSpan, ref TokenScannerState state, out Token token) {
             if (state == TokenScannerState.Text) {
-                Keyword keyword = Keyword.Parse(sourceTextSpan, 0, Delimiter.FindNext(sourceTextSpan, 0));
+                int nextDelim = Delimiter.FindNext(sourceTextSpan, 0);
+                Keyword keyword = Keyword.Parse(nextDelim == sourceTextSpan.Length ? sourceTextSpan : sourceTextSpan.Remove(nextDelim));
                 if (keyword != null) {
                     token = keyword;
                     return true;
