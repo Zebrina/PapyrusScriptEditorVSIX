@@ -67,60 +67,64 @@ namespace Papyrus.Features {
         }
 
         public IEnumerable<ITagSpan<BraceMatchingTag>> GetTags(NormalizedSnapshotSpanCollection spans) {
-            if (spans.Count == 0)   //there is no content in the buffer
+            if (spans.Count == 0) { //there is no content in the buffer
                 yield break;
+            }
 
             //don't do anything if the current SnapshotPoint is not initialized or at the end of the buffer
-            if (!CurrentChar.HasValue || CurrentChar.Value.Position >= CurrentChar.Value.Snapshot.Length)
+            if (!CurrentChar.HasValue || CurrentChar.Value.Position >= CurrentChar.Value.Snapshot.Length) {
                 yield break;
+            }
 
             //hold on to a snapshot of the current character
             SnapshotPoint currentChar = CurrentChar.Value;
 
             //if the requested snapshot isn't the same as the one the brace is on, translate our spans to the expected snapshot
-            if (spans[0].Snapshot != currentChar.Snapshot) {
-                currentChar = currentChar.TranslateTo(spans[0].Snapshot, PointTrackingMode.Positive);
+            if (spans.First().Snapshot != currentChar.Snapshot) {
+                currentChar = currentChar.TranslateTo(spans.First().Snapshot, PointTrackingMode.Positive);
             }
 
             SnapshotPoint previousChar = currentChar - 1;
 
             IReadOnlyTokenSnapshot parsedSnapshot = BackgroundParser.Singleton.TokenSnapshot;
-            if (parsedSnapshot != null) {
-                IReadOnlyTokenSnapshotLine parsedLine;
+            if (parsedSnapshot == null) {
+                yield break;
+            }
 
-                try {
-                    parsedLine = parsedSnapshot.Single(l => {
-                        return l.BaseTextSnapshotLine.Extent.Contains(currentChar) ||
-                        (currentChar > 0 && l.BaseTextSnapshotLine.Extent.Contains(previousChar));
-                    });
-                }
-                catch (InvalidOperationException e) {
-                    yield break;
-                }
+            IReadOnlyTokenSnapshotLine parsedLine;
 
-                TokenInfo openingToken = parsedLine.SingleOrDefault(t => t.Span.Contains(currentChar));
-                TokenInfo closingToken = parsedLine.SingleOrDefault(t => t.Span.Contains(previousChar));
+            try {
+                parsedLine = parsedSnapshot.Single(l => l.Any(t => {
+                    return t.Span.Contains(currentChar) ||
+                        (currentChar > 0 && t.Span.Contains(previousChar));
+                }));
+            }
+            catch (InvalidOperationException e) {
+                yield break;
+            }
 
-                if (openingToken != null && openingToken.Type.IsOpeningBracer) {
-                    SnapshotSpan matchedSpan;
-                    if (FindMatchingSpan(parsedLine, openingToken, out matchedSpan)) {
-                        yield return new TagSpan<BraceMatchingTag>(openingToken.Span, new BraceMatchingTag());
-                        yield return new TagSpan<BraceMatchingTag>(matchedSpan, new BraceMatchingTag());
-                    }
+            PapyrusTokenInfo openingToken = parsedLine.SingleOrDefault(t => t.Span.Contains(currentChar));
+            PapyrusTokenInfo closingToken = parsedLine.SingleOrDefault(t => t.Span.Contains(previousChar));
+
+            if (openingToken != null && openingToken.Type.IsOpeningBracer) {
+                SnapshotSpan matchedSpan;
+                if (FindMatchingSpan(parsedLine, openingToken, out matchedSpan)) {
+                    yield return new TagSpan<BraceMatchingTag>(openingToken.Span, new BraceMatchingTag());
+                    yield return new TagSpan<BraceMatchingTag>(matchedSpan, new BraceMatchingTag());
                 }
-                else if (closingToken != null && closingToken.Type.IsClosingBracer) {
-                    SnapshotSpan matchedSpan;
-                    if (FindMatchingSpan(parsedLine.Reverse(), closingToken, out matchedSpan)) {
-                        yield return new TagSpan<BraceMatchingTag>(matchedSpan, new BraceMatchingTag());
-                        yield return new TagSpan<BraceMatchingTag>(closingToken.Span, new BraceMatchingTag());
-                    }
+            }
+            else if (closingToken != null && closingToken.Type.IsClosingBracer) {
+                SnapshotSpan matchedSpan;
+                if (FindMatchingSpan(parsedLine.Reverse(), closingToken, out matchedSpan)) {
+                    yield return new TagSpan<BraceMatchingTag>(matchedSpan, new BraceMatchingTag());
+                    yield return new TagSpan<BraceMatchingTag>(closingToken.Span, new BraceMatchingTag());
                 }
             }
         }
 
-        private static bool FindMatchingSpan(IEnumerable<TokenInfo> line, TokenInfo matchWith, out SnapshotSpan matchedSpan) {
+        private static bool FindMatchingSpan(IEnumerable<PapyrusTokenInfo> line, PapyrusTokenInfo matchWith, out SnapshotSpan matchedSpan) {
             int stackedCount = 0;
-            foreach (TokenInfo tokenInfo in line.SkipWhile(t => !ReferenceEquals(t, matchWith))) {
+            foreach (PapyrusTokenInfo tokenInfo in line.SkipWhile(t => !ReferenceEquals(t, matchWith))) {
                 if (tokenInfo.Type == matchWith.Type) {
                     // First token is the bracer we are trying to match so (stackedCount >= 1) always apply.
                     ++stackedCount;
@@ -143,12 +147,14 @@ namespace Papyrus.Features {
     [TagType(typeof(TextMarkerTag))]
     internal class BraceMatchingTaggerProvider : IViewTaggerProvider {
         public ITagger<T> CreateTagger<T>(ITextView textView, ITextBuffer buffer) where T : ITag {
-            if (textView == null)
+            if (textView == null) {
                 return null;
+            }
 
             //provide highlighting only on the top-level buffer
-            if (textView.TextBuffer != buffer)
+            if (textView.TextBuffer != buffer) {
                 return null;
+            }
 
             return new BraceMatchingTagger(textView, buffer) as ITagger<T>;
         }

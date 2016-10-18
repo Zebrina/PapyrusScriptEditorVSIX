@@ -99,6 +99,7 @@ namespace Papyrus.Language.Components.Tokens {
                                 new Delimiter(Characters.LeftCurlyBracket, false, false),
                                 new Delimiter(Characters.VerticalBar, false, false),
                                 new Delimiter(Characters.RightCurlyBracket, false, false),
+                                new Delimiter(Characters.Backslash, true, true),
                             };
                         }
                     }

@@ -35,12 +35,19 @@ namespace Papyrus.Features {
                     if (snapshot != lastParsedSnapshot) {
                         TokenScanner scanner = TokenScanner.IncludeAllParsers();
                         resultTokenSnapshot = new TokenSnapshot(snapshot);
-                        List<TokenInfo> tokens = new List<TokenInfo>();
+                        List<PapyrusTokenInfo> parsedLineQueue = new List<PapyrusTokenInfo>();
                         foreach (var line in snapshot.Lines) {
-                            scanner.ScanLine(line, tokens);
-                            if (tokens.Count > 0 && tokens.Last().Type.ExtendsLine == false) {
-                                resultTokenSnapshot.Add(new TokenSnapshotLine(line, tokens));
-                                tokens.Clear();
+                            var parsedLine = new List<PapyrusTokenInfo>();
+                            scanner.ScanLine(line, parsedLine);
+                            parsedLineQueue.AddRange(parsedLine);
+
+                            if (parsedLine.Count > 0 && parsedLine.All(t => t.Type.ExtendsLine)) {
+                                continue;
+                            }
+
+                            if (parsedLineQueue.Count > 0) {
+                                resultTokenSnapshot.Add(new TokenSnapshotLine(parsedLineQueue));
+                                parsedLineQueue.Clear();
                             }
                         }
                         lastParsedSnapshot = snapshot;

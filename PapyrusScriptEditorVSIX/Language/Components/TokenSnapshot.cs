@@ -6,32 +6,35 @@ using System.Diagnostics;
 
 namespace Papyrus.Language.Components {
     public interface IReadOnlyTokenSnapshot : IReadOnlyCollection<TokenSnapshotLine> {
-        IEnumerable<TokenInfo> Tokens { get; }
-        IEnumerable<TokenInfo> ParseableTokens { get; }
+        ITextSnapshot BaseTextSnapshot { get; }
+        IEnumerable<PapyrusTokenInfo> Tokens { get; }
+        IEnumerable<PapyrusTokenInfo> ParseableTokens { get; }
         bool IsEmpty { get; }
     }
 
     [DebuggerStepThrough]
     public sealed class TokenSnapshot : IReadOnlyTokenSnapshot, IReadOnlyCollection<TokenSnapshotLine>, ICollection<TokenSnapshotLine>, IEnumerable<TokenSnapshotLine>, IEnumerable {
+        /*
         private class KeyComparer : IComparer<ITextSnapshotLine> {
             int IComparer<ITextSnapshotLine>.Compare(ITextSnapshotLine x, ITextSnapshotLine y) {
                 return x.LineNumber.CompareTo(y.LineNumber);
             }
         }
+        */
 
-        private SortedList<ITextSnapshotLine, TokenSnapshotLine> container;
+        private List<TokenSnapshotLine> container;
 
         public ITextSnapshot BaseTextSnapshot { get; private set; }
 
         public TokenSnapshot(ITextSnapshot baseTextSnapshot) {
             if (baseTextSnapshot == null) throw new ArgumentNullException("baseTextSnapshot");
 
-            this.container = new SortedList<ITextSnapshotLine, TokenSnapshotLine>(new KeyComparer());
+            this.container = new List<TokenSnapshotLine>();
             this.BaseTextSnapshot = baseTextSnapshot;
         }
 
         public TokenSnapshotLine this[int position] {
-            get { return container.Values[position]; }
+            get { return container[position]; }
         }
         public int Count {
             get { return container.Count; }
@@ -43,18 +46,18 @@ namespace Papyrus.Language.Components {
             get { return ((ICollection<TokenSnapshotLine>)container).IsReadOnly; }
         }
 
-        public IEnumerable<TokenInfo> Tokens {
+        public IEnumerable<PapyrusTokenInfo> Tokens {
             get {
-                foreach (var line in container.Values) {
+                foreach (var line in container) {
                     foreach (var token in line) {
                         yield return token;
                     }
                 }
             }
         }
-        public IEnumerable<TokenInfo> ParseableTokens {
+        public IEnumerable<PapyrusTokenInfo> ParseableTokens {
             get {
-                foreach (var line in container.Values) {
+                foreach (var line in container) {
                     foreach (var token in line.ParseableTokens) {
                         yield return token;
                     }
@@ -63,21 +66,21 @@ namespace Papyrus.Language.Components {
         }
 
         public void Add(TokenSnapshotLine item) {
-            if (item != null && item.BaseTextSnapshotLine.Snapshot == BaseTextSnapshot && item.Count > 0) {
-                container.Add(item.BaseTextSnapshotLine, item);
+            if (item != null && item.Count > 0) {
+                container.Add(item);
             }
         }
 
         public bool Contains(TokenSnapshotLine item) {
-            return container.ContainsKey(item.BaseTextSnapshotLine);
+            return container.Contains(item);
         }
 
         public void CopyTo(TokenSnapshotLine[] array, int arrayIndex) {
-            container.Values.CopyTo(array, arrayIndex);
+            container.CopyTo(array, arrayIndex);
         }
 
         bool ICollection<TokenSnapshotLine>.Remove(TokenSnapshotLine item) {
-            return container.Remove(item.BaseTextSnapshotLine);
+            return container.Remove(item);
         }
 
         public void Clear() {
@@ -85,10 +88,10 @@ namespace Papyrus.Language.Components {
         }
 
         IEnumerator IEnumerable.GetEnumerator() {
-            return container.Values.GetEnumerator();
+            return container.GetEnumerator();
         }
         public IEnumerator<TokenSnapshotLine> GetEnumerator() {
-            return container.Values.GetEnumerator();
+            return container.GetEnumerator();
         }
     }
 }

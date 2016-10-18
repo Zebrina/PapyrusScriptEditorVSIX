@@ -63,6 +63,25 @@ namespace Papyrus.Language.Components.Tokens {
             return new Identifier(value);
         }
 
+        public static bool operator ==(Identifier x, Identifier y) {
+            return Equals(x, y);
+        }
+        public static bool operator !=(Identifier x, Identifier y) {
+            return !Equals(x, y);
+        }
+        public static bool operator ==(Identifier x, Token y) {
+            return x == y as Identifier;
+        }
+        public static bool operator !=(Identifier x, Token y) {
+            return x == y as Identifier;
+        }
+        public static bool operator ==(Token x, Identifier y) {
+            return x as Identifier == y;
+        }
+        public static bool operator !=(Token x, Identifier y) {
+            return x as Identifier != y;
+        }
+
         public static bool IsValid(string value) {
             if (String.IsNullOrWhiteSpace(value)) {
                 return false;

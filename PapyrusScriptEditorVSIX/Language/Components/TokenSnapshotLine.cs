@@ -1,17 +1,18 @@
 using Microsoft.VisualStudio.Text;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 
 namespace Papyrus.Language.Components {
-    public interface IReadOnlyTokenSnapshotLine : IReadOnlyCollection<TokenInfo> {
-        IEnumerable<TokenInfo> ParseableTokens { get; }
+    public interface IReadOnlyTokenSnapshotLine : IReadOnlyCollection<PapyrusTokenInfo> {
+        IEnumerable<PapyrusTokenInfo> ParseableTokens { get; }
         bool IsEmpty { get; }
     }
 
     [DebuggerStepThrough]
-    public sealed class TokenSnapshotLine : IReadOnlyTokenSnapshotLine, IReadOnlyCollection<TokenInfo>, ICollection<TokenInfo>, IEnumerable<TokenInfo>, IEnumerable {
+    public sealed class TokenSnapshotLine : IReadOnlyTokenSnapshotLine, IReadOnlyCollection<PapyrusTokenInfo>, ICollection<PapyrusTokenInfo>, IEnumerable<PapyrusTokenInfo>, IEnumerable {
         /*
         private class KeyComparer : IComparer<SnapshotSpan> {
             int IComparer<SnapshotSpan>.Compare(SnapshotSpan x, SnapshotSpan y) {
@@ -20,13 +21,16 @@ namespace Papyrus.Language.Components {
         }
         */
         
-        private SortedList<SnapshotPoint, TokenInfo> container;
+        private SortedList<SnapshotPoint, PapyrusTokenInfo> container;
+        private List<ITextSnapshotLine> baseTextSnapshotLines;
 
-        public ITextSnapshotLine BaseTextSnapshotLine { get; private set; }
+        //[Obsolete]
+        //public SnapshotSpan BaseTextSnapshotLine { get; private set; }
 
-        public TokenSnapshotLine(ITextSnapshotLine baseTextSnapshotLine, IEnumerable<TokenInfo> collection) {
-            this.BaseTextSnapshotLine = baseTextSnapshotLine;
-            this.container = new SortedList<SnapshotPoint, TokenInfo>(collection.ToDictionary(t => t.Span.Start));
+        public TokenSnapshotLine(IEnumerable<PapyrusTokenInfo> collection) {
+            //this.BaseTextSnapshotLine = baseTextSnapshotLine.Extent;
+            this.container = new SortedList<SnapshotPoint, PapyrusTokenInfo>(collection.ToDictionary(t => t.Span.Start));
+            this.baseTextSnapshotLines = new List<ITextSnapshotLine>();
         }
         /*
         public TokenSnapshotLine() {
@@ -35,12 +39,12 @@ namespace Papyrus.Language.Components {
         }
         */
 
-        public TokenInfo this[int position] {
+        public PapyrusTokenInfo this[int position] {
             get { return position < container.Count ? container.Values[position] : null; }
         }
-        public TokenInfo this[SnapshotPoint position] {
+        public PapyrusTokenInfo this[SnapshotPoint position] {
             get {
-                TokenInfo value;
+                PapyrusTokenInfo value;
                 if (container.TryGetValue(position, out value)) {
                     return value;
                 }
@@ -53,28 +57,28 @@ namespace Papyrus.Language.Components {
         public bool IsEmpty {
             get { return container.Count == 0; }
         }
-        bool ICollection<TokenInfo>.IsReadOnly {
+        bool ICollection<PapyrusTokenInfo>.IsReadOnly {
             get { return container.Values.IsReadOnly; }
         }
 
-        public IEnumerable<TokenInfo> ParseableTokens {
+        public IEnumerable<PapyrusTokenInfo> ParseableTokens {
             get { return container.Values.Where(t => t.Type.IgnoredBySyntax == false); }
         }
 
-        public void Add(TokenInfo item) {
+        public void Add(PapyrusTokenInfo item) {
             container.Add(item.Span.Start, item);
         }
-        public void AddRange(IEnumerable<TokenInfo> collection) {
+        public void AddRange(IEnumerable<PapyrusTokenInfo> collection) {
             foreach (var entry in collection) {
                 container.Add(entry.Span.Start, entry);
             }
         }
 
-        public bool Contains(TokenInfo item) {
+        public bool Contains(PapyrusTokenInfo item) {
             return container.ContainsKey(item.Span.Start);
         }
 
-        public bool FindInSpan(SnapshotPoint point, out TokenInfo tokenInfoOut) {
+        public bool FindInSpan(SnapshotPoint point, out PapyrusTokenInfo tokenInfoOut) {
             foreach (var tokenInfo in container.Values) {
                 if (tokenInfo.Span.Contains(point)) {
                     tokenInfoOut = tokenInfo;
@@ -86,11 +90,11 @@ namespace Papyrus.Language.Components {
             return false;
         }
 
-        void ICollection<TokenInfo>.CopyTo(TokenInfo[] array, int arrayIndex) {
+        void ICollection<PapyrusTokenInfo>.CopyTo(PapyrusTokenInfo[] array, int arrayIndex) {
             container.Values.CopyTo(array, arrayIndex);
         }
 
-        public bool Remove(TokenInfo item) {
+        public bool Remove(PapyrusTokenInfo item) {
             return container.Remove(item.Span.Start);
         }
 
@@ -101,7 +105,7 @@ namespace Papyrus.Language.Components {
         IEnumerator IEnumerable.GetEnumerator() {
             return container.Values.GetEnumerator();
         }
-        public IEnumerator<TokenInfo> GetEnumerator() {
+        public IEnumerator<PapyrusTokenInfo> GetEnumerator() {
             return container.Values.GetEnumerator();
         }
     }

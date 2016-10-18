@@ -8,7 +8,7 @@ using System.Diagnostics;
 namespace Papyrus.Language {
     //[DebuggerStepThrough]
     public abstract class TokenParser {
-        public bool TryParse(SnapshotSpan sourceSnapshotSpan, ref TokenScannerState state, TokenInfo tokenInfo) {
+        public bool TryParse(SnapshotSpan sourceSnapshotSpan, ref TokenScannerState state, PapyrusTokenInfo tokenInfo) {
             Token token;
             if (TryParse(sourceSnapshotSpan.GetText(), ref state, out token)) {
                 tokenInfo.Type = token;
@@ -46,7 +46,7 @@ namespace Papyrus.Language {
             return scanner;
         }
 
-        private bool Scan(SnapshotSpan span, ref TokenScannerState state, TokenInfo token) {
+        private bool Scan(SnapshotSpan span, ref TokenScannerState state, PapyrusTokenInfo token) {
             if (!span.IsEmpty) {
                 foreach (var handler in handlers) {
                     if (handler.TryParse(span, ref state, token)) {
@@ -56,9 +56,9 @@ namespace Papyrus.Language {
             }
             return false;
         }
-        public void ScanSpan(SnapshotSpan span, ICollection<TokenInfo> tokenCollection) {
+        public void ScanSpan(SnapshotSpan span, ICollection<PapyrusTokenInfo> tokenCollection) {
             while (!span.IsEmpty) {
-                TokenInfo token = new TokenInfo();
+                PapyrusTokenInfo token = new PapyrusTokenInfo();
                 if (!Scan(span.Ignore(), ref state, token)) {
                     return;
                 }
@@ -66,7 +66,7 @@ namespace Papyrus.Language {
                 span = span.Subspan(token.Span.End);
             }
         }
-        public void ScanLine(ITextSnapshotLine textLine, ICollection<TokenInfo> tokenCollection) {
+        public void ScanLine(ITextSnapshotLine textLine, ICollection<PapyrusTokenInfo> tokenCollection) {
             ScanSpan(textLine.Extent, tokenCollection);
         }
 

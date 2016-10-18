@@ -100,7 +100,7 @@
     <Compile Include="Language\Components\PropertyMember.cs" />
     <Compile Include="Language\Components\Tokens\ScriptObject.cs" />
     <Compile Include="Language\Components\Tokens\StringLiteral.cs" />
-    <Compile Include="Language\TokenInfo.cs" />
+    <Compile Include="Language\PapyrusTokenInfo.cs" />
     <Compile Include="Language\Token.cs" />
     <Compile Include="Language\ScriptLibrary.cs" />
     <Compile Include="Language\ScriptParser.cs" />

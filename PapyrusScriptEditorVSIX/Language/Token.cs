@@ -77,5 +77,19 @@ namespace Papyrus.Language {
         public static explicit operator string(Token token) {
             return token.ToString();
         }
+
+        public override int GetHashCode() {
+            return base.GetHashCode();
+        }
+        public override bool Equals(object obj) {
+            return base.Equals(obj);
+        }
+
+        public static bool operator ==(Token x, Token y) {
+            return Equals(x, y);
+        }
+        public static bool operator !=(Token x, Token y) {
+            return !Equals(x, y);
+        }
     }
 }

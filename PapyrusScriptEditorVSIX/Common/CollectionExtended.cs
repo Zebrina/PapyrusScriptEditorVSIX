@@ -28,21 +28,5 @@ namespace Papyrus.Common {
 
             return result;
         }
-
-        public static void SelectWhere<T, TResult>(this IEnumerable<T> collection, Predicate<T> pred, Func<T, TResult> selector, ICollection<TResult> outContainer) {
-            foreach (var item in collection) {
-                if (pred.Invoke(item)) {
-                    outContainer.Add(selector.Invoke(item));
-                }
-            }
-        }
-        public static IEnumerable<TResult> SelectWhere<T, TResult, TResultContainer>(this IEnumerable<T> collection, Predicate<T> pred, Func<T, TResult> selector) where TResultContainer : ICollection<TResult>, new() {
-            var container = new TResultContainer();
-            collection.SelectWhere(pred, selector, container);
-            return container;
-        }
-        public static IEnumerable<TResult> SelectWhere<T, TResult>(this IEnumerable<T> collection, Predicate<T> pred, Func<T, TResult> selector) {
-            return collection.SelectWhere<T, TResult, List<TResult>>(pred, selector);
-        }
     }
 }
