@@ -1,0 +1,41 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<CommandTable xmlns="http://schemas.microsoft.com/VisualStudio/2005-10-18/CommandTable">
+  <Extern href="stdidcmd.h" />
+  <Extern href="vsshlids.h" />
+  <Symbols>
+    <GuidSymbol value="{a4a96c7e-fc50-471c-9626-ce80e0dac70f}" name="guidPapyrusPackage" />
+  
+    <GuidSymbol value="{28e453ac-ff8a-485a-b191-56a251c78ede}" name="guidPapyrusPackageCmdSet">
+      <IDSymbol value="4128" name="MyMenuGroup" />
+      <IDSymbol value="256" name="cmdidCompileScriptCommand" />
+    </GuidSymbol>
+  
+    <GuidSymbol value="{d1fe2c4e-4d67-454b-ab2e-90be5fdf82c0}" name="guidImages">
+      <IDSymbol name="bmpPic1" value="1" />
+      <IDSymbol name="bmpPic2" value="2" />
+      <IDSymbol name="bmpPicSearch" value="3" />
+      <IDSymbol name="bmpPicX" value="4" />
+      <IDSymbol name="bmpPicArrows" value="5" />
+      <IDSymbol name="bmpPicStrikethrough" value="6" />
+    </GuidSymbol>
+  </Symbols>
+  <Commands package="guidPapyrusPackage">
+    <Groups>
+      <Group guid="guidPapyrusPackageCmdSet" id="MyMenuGroup" priority="0x0600">
+        <Parent guid="guidSHLMainMenu" id="IDM_VS_MENU_TOOLS" />
+      </Group>
+    </Groups>
+    <Bitmaps>
+      <Bitmap guid="guidImages" href="Commands\Resources\CompileScriptCommand.png" usedList="bmpPic1, bmpPic2, bmpPicSearch, bmpPicX, bmpPicArrows, bmpPicStrikethrough" />
+    </Bitmaps>
+    <Buttons>
+      <Button guid="guidPapyrusPackageCmdSet" id="cmdidCompileScriptCommand" priority="0x0100" type="Button">
+        <Parent guid="guidPapyrusPackageCmdSet" id="MyMenuGroup" />
+        <Icon guid="guidImages" id="bmpPic1" />
+        <Strings>
+          <ButtonText>Invoke CompileScriptCommand</ButtonText>
+        </Strings>
+      </Button>
+    </Buttons>
+  </Commands>
+</CommandTable>

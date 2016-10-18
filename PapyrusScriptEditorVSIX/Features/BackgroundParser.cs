@@ -41,7 +41,7 @@ namespace Papyrus.Features {
                             scanner.ScanLine(line, parsedLine);
                             parsedLineQueue.AddRange(parsedLine);
 
-                            if (parsedLine.Count > 0 && parsedLine.All(t => t.Type.ExtendsLine)) {
+                            if (parsedLine.Count > 0 && parsedLine.Any(t => t.Type.ExtendsLine)) {
                                 continue;
                             }
 

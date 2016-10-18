@@ -6,8 +6,9 @@
 
 using System;
 using System.ComponentModel.Design;
+using System.Globalization;
 using Microsoft.VisualStudio.Shell;
-using Microsoft.VisualStudio.TextManager.Interop;
+using Microsoft.VisualStudio.Shell.Interop;
 
 namespace Papyrus.Commands {
     /// <summary>
@@ -17,12 +18,12 @@ namespace Papyrus.Commands {
         /// <summary>
         /// Command ID.
         /// </summary>
-        public const int CommandId = 0x0100;
+        public const int CommandId = 256;
 
         /// <summary>
         /// Command menu group (command set GUID).
         /// </summary>
-        public static readonly Guid CommandSet = new Guid("46249FA0-CDC3-4CFC-9B23-554B148ABF84");
+        public static readonly Guid CommandSet = new Guid("28e453ac-ff8a-485a-b191-56a251c78ede");
 
         /// <summary>
         /// VS Package that provides this command, not null.
@@ -52,13 +53,18 @@ namespace Papyrus.Commands {
         /// <summary>
         /// Gets the instance of the command.
         /// </summary>
-        public static CompileScriptCommand Instance { get; private set; }
+        public static CompileScriptCommand Instance {
+            get;
+            private set;
+        }
 
         /// <summary>
         /// Gets the service provider from the owner package.
         /// </summary>
         private IServiceProvider ServiceProvider {
-            get { return this.package; }
+            get {
+                return this.package;
+            }
         }
 
         /// <summary>
@@ -77,29 +83,17 @@ namespace Papyrus.Commands {
         /// <param name="sender">Event sender.</param>
         /// <param name="e">Event args.</param>
         private void MenuItemCallback(object sender, EventArgs e) {
-            IVsTextManager textManager = (IVsTextManager)ServiceProvider.GetService(typeof(IVsTextManager));
+            string message = string.Format(CultureInfo.CurrentCulture, "Inside {0}.MenuItemCallback()", this.GetType().FullName);
+            string title = "CompileScriptCommand";
 
-            IVsTextView activeView;
-            /*
-            if (textManager != null && textManager.GetActiveView(1, null, out activeView) == VSConstants.S_OK) {
-                PapyrusLanguageService languageService = (PapyrusLanguageService)ServiceProvider.GetService(typeof(PapyrusLanguageService));
-
-                if (languageService != null) {
-                    Source source = languageService.GetSource(activeView);
-
-                    string message = source.GetFilePath();
-                    string title = "CompileScriptCommand";
-                    // Show a message box to prove we were here
-                    VsShellUtilities.ShowMessageBox(
-                        this.ServiceProvider,
-                        message,
-                        title,
-                        OLEMSGICON.OLEMSGICON_INFO,
-                        OLEMSGBUTTON.OLEMSGBUTTON_OK,
-                        OLEMSGDEFBUTTON.OLEMSGDEFBUTTON_FIRST);
-                }
-            }
-            */
+            // Show a message box to prove we were here
+            VsShellUtilities.ShowMessageBox(
+                this.ServiceProvider,
+                message,
+                title,
+                OLEMSGICON.OLEMSGICON_INFO,
+                OLEMSGBUTTON.OLEMSGBUTTON_OK,
+                OLEMSGDEFBUTTON.OLEMSGDEFBUTTON_FIRST);
         }
     }
 }

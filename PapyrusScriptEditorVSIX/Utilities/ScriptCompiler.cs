@@ -60,8 +60,7 @@ namespace Papyrus.Utilities {
 
         public static void Initialize(Package package) {
             output = OutputWindowPaneManager.Instance.CreateWindowPane(new Guid(OutputGuidString), "Papyrus Compiler");
-
-            output.Print("HEJ!");
+            output.Print("Papyrus Compiler initialized.");
         }
 
         public static void StartCompileThread(string fileOrFolder, string outputFolder, string[] importFolders, string flags, CompilerFlags argumentFlags = CompilerFlags.None) {
