@@ -2,6 +2,8 @@
 using Microsoft.VisualStudio.Utilities;
 using Papyrus.Common;
 using Papyrus.Features;
+using System;
+using System.Collections.Generic;
 using System.ComponentModel.Composition;
 using System.Diagnostics;
 using System.Linq;
@@ -31,10 +33,12 @@ namespace Papyrus.Language.Components.Tokens {
     }
 
     [DebuggerStepThrough]
-    public sealed class CreationKitDocumentation : Token, ISyntaxColorable {
+    public sealed class CreationKitDocumentation : Token, ISyntaxColorable, IOutlineableToken {
         private string documentationText;
 
         public CreationKitDocumentation(string documentationText) {
+            if (documentationText == null) throw new ArgumentNullException("documentationText");
+
             this.documentationText = documentationText;
         }
 
@@ -43,6 +47,22 @@ namespace Papyrus.Language.Components.Tokens {
         }
         public override TokenTypeID TypeID {
             get { return TokenTypeID.CreationKitInfo; }
+        }
+        
+        bool IOutlineableToken.IsOutlineableStart(IReadOnlyTokenSnapshotLine line) {
+            return documentationText.FirstOrDefault() == Characters.LeftCurlyBracket && documentationText.LastOrDefault() != Characters.RightCurlyBracket;
+        }
+        bool IOutlineableToken.IsOutlineableEnd(IOutlineableToken startToken) {
+            return documentationText.LastOrDefault() == Characters.RightCurlyBracket && documentationText.FirstOrDefault() != Characters.LeftCurlyBracket;
+        }
+        bool IOutlineableToken.IsImplementation {
+            get { return false; }
+        }
+        string IOutlineableToken.CollapsedText {
+            get { return "{ ... }"; }
+        }
+        bool IOutlineableToken.CollapseFirstLine {
+            get { return true; }
         }
 
         public override bool IgnoredBySyntax {
@@ -94,7 +114,7 @@ namespace Papyrus.Language.Components.Tokens {
             return false;
         }
         */
-        public override bool TryParse(string sourceTextSpan, ref TokenScannerState state, out Token token) {
+        public override bool TryParse(string sourceTextSpan, ref TokenScannerState state, IEnumerable<Token> previousTokens, out Token token) {
             int endOffset, length;
             if (state == TokenScannerState.Text) {
                 if (sourceTextSpan.FirstOrDefault() == Characters.LeftCurlyBracket) {
@@ -110,7 +130,7 @@ namespace Papyrus.Language.Components.Tokens {
                     return true;
                 }
             }
-            else if (state == TokenScannerState.BlockComment) {
+            else if (state == TokenScannerState.Documentation) {
                 endOffset = sourceTextSpan.IndexOf(Characters.RightCurlyBracket);
                 if (endOffset == -1) {
                     token = new CreationKitDocumentation(sourceTextSpan);

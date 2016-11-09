@@ -21,7 +21,7 @@ namespace Papyrus.Features {
     /// <summary>
     /// Classifier that classifies all text as an instance of the "SyntaxColorization" classification type.
     /// </summary>
-    internal class SyntaxColorization : IClassifier {
+    internal sealed class SyntaxColorization : IClassifier {
         private IClassificationTypeRegistryService registry;
         private ITextBuffer buffer;
         private ITextSnapshot snapshot;
@@ -119,7 +119,7 @@ namespace Papyrus.Features {
     /// </summary>
     [Export(typeof(IClassifierProvider))]
     [ContentType(PapyrusContentDefinition.ContentType)]
-    internal class SyntaxColorizationProvider : IClassifierProvider {
+    internal sealed class SyntaxColorizationProvider : IClassifierProvider {
         /// <summary>
         /// Classification registry to be used for getting a reference
         /// to the custom classification type later.

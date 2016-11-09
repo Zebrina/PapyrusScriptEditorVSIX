@@ -1,5 +1,6 @@
 ﻿using Microsoft.VisualStudio.Text.Classification;
 using Microsoft.VisualStudio.Utilities;
+using Papyrus.Common;
 using Papyrus.Features;
 using System;
 using System.Collections.Generic;
@@ -50,6 +51,65 @@ namespace Papyrus.Language.Components.Tokens {
         PropertyTypeAttribute       = 0x0800,
         All                         = 0xffff,
     }
+
+    /*
+     * 
+     * { KeywordID.Scriptname, new Keyword(KeywordID.Scriptname) },
+            { KeywordID.Extends, new Keyword(KeywordID.Extends) },
+            { KeywordID.Import, new Keyword(KeywordID.Import) },
+
+            { KeywordID.Hidden, new Keyword(KeywordID.Hidden, KeywordAttribute.Attribute) },
+            { KeywordID.Conditional, new Keyword(KeywordID.Conditional, KeywordAttribute.Attribute | KeywordAttribute.Attribute) },
+            { KeywordID.Global, new Keyword(KeywordID.Global, KeywordAttribute.Attribute) },
+            { KeywordID.Auto, new Keyword(KeywordID.Auto, KeywordAttribute.PropertyTypeAttribute | KeywordAttribute.BreakOutlineableProperty) },
+            { KeywordID.AutoReadOnly, new Keyword(KeywordID.AutoReadOnly, KeywordAttribute.PropertyTypeAttribute | KeywordAttribute.BreakOutlineableProperty) },
+            { KeywordID.Native, new Keyword(KeywordID.Native, KeywordAttribute.Attribute | KeywordAttribute.BreakOutlineableFunction) },
+
+            { KeywordID.Bool, new Keyword(KeywordID.Bool, KeywordAttribute.NativeType) },
+            { KeywordID.Int, new Keyword(KeywordID.Int, KeywordAttribute.NativeType) },
+            { KeywordID.Float, new Keyword(KeywordID.Float, KeywordAttribute.NativeType) },
+            { KeywordID.String, new Keyword(KeywordID.String, KeywordAttribute.NativeType) },
+
+            { KeywordID.False, new Keyword(KeywordID.False, KeywordAttribute.CompileTimeConstant) },
+            { KeywordID.True, new Keyword(KeywordID.True, KeywordAttribute.CompileTimeConstant) },
+            { KeywordID.None, new Keyword(KeywordID.None, KeywordAttribute.CompileTimeConstant) },
+
+            { KeywordID.Self, new Keyword(KeywordID.Self, KeywordAttribute.SpecialIdentifier) },
+            { KeywordID.Parent, new Keyword(KeywordID.Parent, KeywordAttribute.SpecialIdentifier) },
+
+            { KeywordID.Length, new Keyword(KeywordID.Length, KeywordAttribute.SpecialMember) },
+
+            { KeywordID.As, new Keyword(KeywordID.As, KeywordAttribute.SpecialOperator) },
+            { KeywordID.New, new Keyword(KeywordID.New, KeywordAttribute.SpecialOperator) },
+            { KeywordID.Return, new Keyword(KeywordID.Return, KeywordAttribute.SpecialOperator) },
+
+            { KeywordID.If, new Keyword(KeywordID.If, KeywordAttribute.IndentIncreaseAtNewLine) },
+            { KeywordID.Else, new Keyword(KeywordID.Else, KeywordAttribute.IndentDecrease | KeywordAttribute.IndentIncreaseAtNewLine) },
+            { KeywordID.EndIf, new Keyword(KeywordID.EndIf, KeywordAttribute.IndentDecrease) },
+            { KeywordID.While, new Keyword(KeywordID.While, KeywordAttribute.IndentIncreaseAtNewLine) },
+            { KeywordID.EndWhile, new Keyword(KeywordID.EndWhile, KeywordAttribute.IndentDecrease) },
+
+            { KeywordID.Property, new Keyword(KeywordID.Property, KeywordAttribute.OutlineableBegin | KeywordAttribute.IndentIncreaseAtNewLine) },
+            { KeywordID.EndProperty, new Keyword(KeywordID.EndProperty, KeywordAttribute.OutlineableEnd | KeywordAttribute.IndentDecrease) },
+            { KeywordID.Function, new Keyword(KeywordID.Function, KeywordAttribute.OutlineableBegin | KeywordAttribute.IndentIncreaseAtNewLine) },
+            { KeywordID.EndFunction, new Keyword(KeywordID.EndFunction, KeywordAttribute.OutlineableEnd | KeywordAttribute.IndentDecrease) },
+            { KeywordID.Event, new Keyword(KeywordID.Event, KeywordAttribute.OutlineableBegin | KeywordAttribute.IndentIncreaseAtNewLine) },
+            { KeywordID.EndEvent, new Keyword(KeywordID.EndEvent, KeywordAttribute.OutlineableEnd | KeywordAttribute.IndentDecrease) },
+            { KeywordID.State, new Keyword(KeywordID.State, KeywordAttribute.OutlineableBegin | KeywordAttribute.IndentIncreaseAtNewLine) },
+            { KeywordID.EndState, new Keyword(KeywordID.EndState, KeywordAttribute.OutlineableEnd | KeywordAttribute.IndentDecrease) },
+
+            // FO4
+            { KeywordID.DebugOnly, new Keyword(KeywordID.DebugOnly, KeywordAttribute.Attribute) },
+            { KeywordID.BetaOnly, new Keyword(KeywordID.BetaOnly, KeywordAttribute.Attribute) },
+            { KeywordID.Const, new Keyword(KeywordID.Const, KeywordAttribute.Attribute) },
+            { KeywordID.Mandatory, new Keyword(KeywordID.Mandatory, KeywordAttribute.Attribute) },
+            { KeywordID.Var, new Keyword(KeywordID.Var, KeywordAttribute.NativeType) },
+            { KeywordID.ScriptObject, new Keyword(KeywordID.ScriptObject, KeywordAttribute.NativeType) },
+            { KeywordID.Is, new Keyword(KeywordID.Is, KeywordAttribute.SpecialOperator) },
+            { KeywordID.Struct, new Keyword(KeywordID.Struct, KeywordAttribute.OutlineableBegin | KeywordAttribute.IndentIncreaseAtNewLine) },
+            { KeywordID.EndStruct, new Keyword(KeywordID.EndStruct, KeywordAttribute.OutlineableEnd | KeywordAttribute.IndentDecrease) },
+     * 
+     * */
 
     public enum KeywordID : ushort {
         Scriptname,
@@ -109,124 +169,117 @@ namespace Papyrus.Language.Components.Tokens {
         Group,
         EndGroup,
     }
-
-    public sealed class Keyword : Token, ISyntaxColorable {
+    
+    public sealed class Keyword : Token, ISyntaxColorable, IOutlineableToken {
         #region Definitions
 
-        private static readonly Dictionary<KeywordID, Keyword> allKeywords = new Dictionary<KeywordID, Keyword>() {
-            { KeywordID.Scriptname, new Keyword(KeywordID.Scriptname) },
-            { KeywordID.Extends, new Keyword(KeywordID.Extends) },
-            { KeywordID.Import, new Keyword(KeywordID.Import) },
+        [StaticToken]
+        public static readonly Keyword Scriptname = new Keyword(KeywordID.Scriptname);
+        [StaticToken]
+        public static readonly Keyword Extends = new Keyword(KeywordID.Extends);
+        [StaticToken]
+        public static readonly Keyword Import = new Keyword(KeywordID.Import);
 
-            { KeywordID.Hidden, new Keyword(KeywordID.Hidden, KeywordAttribute.Attribute) },
-            { KeywordID.Conditional, new Keyword(KeywordID.Conditional, KeywordAttribute.Attribute | KeywordAttribute.Attribute) },
-            { KeywordID.Global, new Keyword(KeywordID.Global, KeywordAttribute.Attribute) },
-            { KeywordID.Auto, new Keyword(KeywordID.Auto, KeywordAttribute.PropertyTypeAttribute | KeywordAttribute.BreakOutlineableProperty) },
-            { KeywordID.AutoReadOnly, new Keyword(KeywordID.AutoReadOnly, KeywordAttribute.PropertyTypeAttribute | KeywordAttribute.BreakOutlineableProperty) },
-            { KeywordID.Native, new Keyword(KeywordID.Native, KeywordAttribute.Attribute | KeywordAttribute.BreakOutlineableFunction) },
+        [StaticToken]
+        public static readonly Keyword Hidden = new Keyword(KeywordID.Hidden, KeywordAttribute.Attribute);
+        [StaticToken]
+        public static readonly Keyword Conditional = new Keyword(KeywordID.Conditional, KeywordAttribute.Attribute | KeywordAttribute.Attribute);
+        [StaticToken]
+        public static readonly Keyword Global = new Keyword(KeywordID.Global, KeywordAttribute.Attribute);
+        [StaticToken]
+        public static readonly Keyword Auto = new Keyword(KeywordID.Auto, KeywordAttribute.PropertyTypeAttribute | KeywordAttribute.BreakOutlineableProperty);
+        [StaticToken]
+        public static readonly Keyword AutoReadOnly = new Keyword(KeywordID.AutoReadOnly, KeywordAttribute.PropertyTypeAttribute | KeywordAttribute.BreakOutlineableProperty);
+        [StaticToken]
+        public static readonly Keyword Native = new Keyword(KeywordID.Native, KeywordAttribute.Attribute | KeywordAttribute.BreakOutlineableFunction);
 
-            { KeywordID.Bool, new Keyword(KeywordID.Bool, KeywordAttribute.NativeType) },
-            { KeywordID.Int, new Keyword(KeywordID.Int, KeywordAttribute.NativeType) },
-            { KeywordID.Float, new Keyword(KeywordID.Float, KeywordAttribute.NativeType) },
-            { KeywordID.String, new Keyword(KeywordID.String, KeywordAttribute.NativeType) },
+        [StaticToken]
+        public static readonly Keyword Bool = new Keyword(KeywordID.Bool, KeywordAttribute.NativeType);
+        [StaticToken]
+        public static readonly Keyword Int = new Keyword(KeywordID.Int, KeywordAttribute.NativeType);
+        [StaticToken]
+        public static readonly Keyword Float = new Keyword(KeywordID.Float, KeywordAttribute.NativeType);
+        [StaticToken]
+        public static readonly Keyword String = new Keyword(KeywordID.String, KeywordAttribute.NativeType);
 
-            { KeywordID.False, new Keyword(KeywordID.False, KeywordAttribute.CompileTimeConstant) },
-            { KeywordID.True, new Keyword(KeywordID.True, KeywordAttribute.CompileTimeConstant) },
-            { KeywordID.None, new Keyword(KeywordID.None, KeywordAttribute.CompileTimeConstant) },
+        [StaticToken]
+        public static readonly Keyword False = new Keyword(KeywordID.False, KeywordAttribute.CompileTimeConstant);
+        [StaticToken]
+        public static readonly Keyword True = new Keyword(KeywordID.True, KeywordAttribute.CompileTimeConstant);
+        [StaticToken]
+        public static readonly Keyword None = new Keyword(KeywordID.None, KeywordAttribute.CompileTimeConstant);
 
-            { KeywordID.Self, new Keyword(KeywordID.Self, KeywordAttribute.SpecialIdentifier) },
-            { KeywordID.Parent, new Keyword(KeywordID.Parent, KeywordAttribute.SpecialIdentifier) },
+        [StaticToken]
+        public static readonly Keyword Self = new Keyword(KeywordID.Self, KeywordAttribute.SpecialIdentifier);
+        [StaticToken]
+        public static readonly Keyword Parent = new Keyword(KeywordID.Parent, KeywordAttribute.SpecialIdentifier);
 
-            { KeywordID.Length, new Keyword(KeywordID.Length, KeywordAttribute.SpecialMember) },
+        [StaticToken]
+        public static readonly Keyword Length = new Keyword(KeywordID.Length, KeywordAttribute.SpecialMember);
 
-            { KeywordID.As, new Keyword(KeywordID.As, KeywordAttribute.SpecialOperator) },
-            { KeywordID.New, new Keyword(KeywordID.New, KeywordAttribute.SpecialOperator) },
-            { KeywordID.Return, new Keyword(KeywordID.Return, KeywordAttribute.SpecialOperator) },
+        [StaticToken]
+        public static readonly Keyword As = new Keyword(KeywordID.As, KeywordAttribute.SpecialOperator);
+        [StaticToken]
+        public static readonly Keyword New = new Keyword(KeywordID.New, KeywordAttribute.SpecialOperator);
+        [StaticToken]
+        public static readonly Keyword Return = new Keyword(KeywordID.Return, KeywordAttribute.SpecialOperator);
 
-            { KeywordID.If, new Keyword(KeywordID.If, KeywordAttribute.IndentIncreaseAtNewLine) },
-            { KeywordID.Else, new Keyword(KeywordID.Else, KeywordAttribute.IndentDecrease | KeywordAttribute.IndentIncreaseAtNewLine) },
-            { KeywordID.EndIf, new Keyword(KeywordID.EndIf, KeywordAttribute.IndentDecrease) },
-            { KeywordID.While, new Keyword(KeywordID.While, KeywordAttribute.IndentIncreaseAtNewLine) },
-            { KeywordID.EndWhile, new Keyword(KeywordID.EndWhile, KeywordAttribute.IndentDecrease) },
+        [StaticToken]
+        public static readonly Keyword If = new Keyword(KeywordID.If, KeywordAttribute.IndentIncreaseAtNewLine);
+        [StaticToken]
+        public static readonly Keyword Else = new Keyword(KeywordID.Else, KeywordAttribute.IndentDecrease | KeywordAttribute.IndentIncreaseAtNewLine);
+        [StaticToken]
+        public static readonly Keyword EndIf = new Keyword(KeywordID.EndIf, KeywordAttribute.IndentDecrease);
+        [StaticToken]
+        public static readonly Keyword While = new Keyword(KeywordID.While, KeywordAttribute.IndentIncreaseAtNewLine);
+        [StaticToken]
+        public static readonly Keyword EndWhile = new Keyword(KeywordID.EndWhile, KeywordAttribute.IndentDecrease);
 
-            { KeywordID.Property, new Keyword(KeywordID.Property, KeywordAttribute.OutlineableBegin | KeywordAttribute.IndentIncreaseAtNewLine) },
-            { KeywordID.EndProperty, new Keyword(KeywordID.EndProperty, KeywordAttribute.OutlineableEnd | KeywordAttribute.IndentDecrease) },
-            { KeywordID.Function, new Keyword(KeywordID.Function, KeywordAttribute.OutlineableBegin | KeywordAttribute.IndentIncreaseAtNewLine) },
-            { KeywordID.EndFunction, new Keyword(KeywordID.EndFunction, KeywordAttribute.OutlineableEnd | KeywordAttribute.IndentDecrease) },
-            { KeywordID.Event, new Keyword(KeywordID.Event, KeywordAttribute.OutlineableBegin | KeywordAttribute.IndentIncreaseAtNewLine) },
-            { KeywordID.EndEvent, new Keyword(KeywordID.EndEvent, KeywordAttribute.OutlineableEnd | KeywordAttribute.IndentDecrease) },
-            { KeywordID.State, new Keyword(KeywordID.State, KeywordAttribute.OutlineableBegin | KeywordAttribute.IndentIncreaseAtNewLine) },
-            { KeywordID.EndState, new Keyword(KeywordID.EndState, KeywordAttribute.OutlineableEnd | KeywordAttribute.IndentDecrease) },
-
-            // FO4
-            { KeywordID.DebugOnly, new Keyword(KeywordID.DebugOnly, KeywordAttribute.Attribute) },
-            { KeywordID.BetaOnly, new Keyword(KeywordID.BetaOnly, KeywordAttribute.Attribute) },
-            { KeywordID.Const, new Keyword(KeywordID.Const, KeywordAttribute.Attribute) },
-            { KeywordID.Mandatory, new Keyword(KeywordID.Mandatory, KeywordAttribute.Attribute) },
-            { KeywordID.Var, new Keyword(KeywordID.Var, KeywordAttribute.NativeType) },
-            { KeywordID.ScriptObject, new Keyword(KeywordID.ScriptObject, KeywordAttribute.NativeType) },
-            { KeywordID.Is, new Keyword(KeywordID.Is, KeywordAttribute.SpecialOperator) },
-            { KeywordID.Struct, new Keyword(KeywordID.Struct, KeywordAttribute.OutlineableBegin | KeywordAttribute.IndentIncreaseAtNewLine) },
-            { KeywordID.EndStruct, new Keyword(KeywordID.EndStruct, KeywordAttribute.OutlineableEnd | KeywordAttribute.IndentDecrease) },
-        };
-        public static IReadOnlyCollection<Keyword> All {
-            get { return allKeywords.Values; }
-        }
-
-        public static Keyword Scriptname { get { return allKeywords[KeywordID.Scriptname]; } }
-        public static Keyword Extends { get { return allKeywords[KeywordID.Extends]; } }
-        public static Keyword Import { get { return allKeywords[KeywordID.Import]; } }
-
-        public static Keyword Hidden { get { return allKeywords[KeywordID.Hidden]; } }
-        public static Keyword Conditional { get { return allKeywords[KeywordID.Conditional]; } }
-        public static Keyword Global { get { return allKeywords[KeywordID.Global]; } }
-        public static Keyword Auto { get { return allKeywords[KeywordID.Auto]; } }
-        public static Keyword AutoReadOnly { get { return allKeywords[KeywordID.AutoReadOnly]; } }
-        public static Keyword Native { get { return allKeywords[KeywordID.Native]; } }
-
-        public static Keyword Bool { get { return allKeywords[KeywordID.Bool]; } }
-        public static Keyword Int { get { return allKeywords[KeywordID.Int]; } }
-        public static Keyword Float { get { return allKeywords[KeywordID.Float]; } }
-        public static Keyword String { get { return allKeywords[KeywordID.String]; } }
-
-        public static Keyword False { get { return allKeywords[KeywordID.False]; } }
-        public static Keyword True { get { return allKeywords[KeywordID.True]; } }
-        public static Keyword None { get { return allKeywords[KeywordID.None]; } }
-
-        public static Keyword Self { get { return allKeywords[KeywordID.Self]; } }
-        public static Keyword Parent { get { return allKeywords[KeywordID.Parent]; } }
-
-        public static Keyword Length { get { return allKeywords[KeywordID.Length]; } }
-
-        public static Keyword As { get { return allKeywords[KeywordID.As]; } }
-        public static Keyword New { get { return allKeywords[KeywordID.New]; } }
-        public static Keyword Return { get { return allKeywords[KeywordID.Return]; } }
-
-        public static Keyword If { get { return allKeywords[KeywordID.If]; } }
-        public static Keyword Else { get { return allKeywords[KeywordID.Else]; } }
-        public static Keyword EndIf { get { return allKeywords[KeywordID.EndIf]; } }
-        public static Keyword While { get { return allKeywords[KeywordID.While]; } }
-        public static Keyword EndWhile { get { return allKeywords[KeywordID.EndWhile]; } }
-
-        public static Keyword Property { get { return allKeywords[KeywordID.Property]; } }
-        public static Keyword EndProperty { get { return allKeywords[KeywordID.EndProperty]; } }
-        public static Keyword Function { get { return allKeywords[KeywordID.Function]; } }
-        public static Keyword EndFunction { get { return allKeywords[KeywordID.EndFunction]; } }
-        public static Keyword Event { get { return allKeywords[KeywordID.Event]; } }
-        public static Keyword EndEvent { get { return allKeywords[KeywordID.EndEvent]; } }
-        public static Keyword State { get { return allKeywords[KeywordID.State]; } }
-        public static Keyword EndState { get { return allKeywords[KeywordID.EndState]; } }
+        [StaticToken]
+        public static readonly Keyword Property = new Keyword(KeywordID.Property, KeywordAttribute.OutlineableBegin | KeywordAttribute.IndentIncreaseAtNewLine);
+        [StaticToken]
+        public static readonly Keyword EndProperty = new Keyword(KeywordID.EndProperty, KeywordAttribute.OutlineableEnd | KeywordAttribute.IndentDecrease);
+        [StaticToken]
+        public static readonly Keyword Function = new Keyword(KeywordID.Function, KeywordAttribute.OutlineableBegin | KeywordAttribute.IndentIncreaseAtNewLine);
+        [StaticToken]
+        public static readonly Keyword EndFunction = new Keyword(KeywordID.EndFunction, KeywordAttribute.OutlineableEnd | KeywordAttribute.IndentDecrease);
+        [StaticToken]
+        public static readonly Keyword Event = new Keyword(KeywordID.Event, KeywordAttribute.OutlineableBegin | KeywordAttribute.IndentIncreaseAtNewLine);
+        [StaticToken]
+        public static readonly Keyword EndEvent = new Keyword(KeywordID.EndEvent, KeywordAttribute.OutlineableEnd | KeywordAttribute.IndentDecrease);
+        [StaticToken]
+        public static readonly Keyword State = new Keyword(KeywordID.State, KeywordAttribute.OutlineableBegin | KeywordAttribute.IndentIncreaseAtNewLine);
+        [StaticToken]
+        public static readonly Keyword EndState = new Keyword(KeywordID.EndState, KeywordAttribute.OutlineableEnd | KeywordAttribute.IndentDecrease);
 
         // FO4
-        public static Keyword DebugOnly { get { return allKeywords[KeywordID.DebugOnly]; } }
-        public static Keyword BetaOnly { get { return allKeywords[KeywordID.BetaOnly]; } }
-        public static Keyword Const { get { return allKeywords[KeywordID.Const]; } }
-        public static Keyword Mandatory { get { return allKeywords[KeywordID.Mandatory]; } }
-        public static Keyword Var { get { return allKeywords[KeywordID.Var]; } }
-        public static Keyword ScriptObject { get { return allKeywords[KeywordID.ScriptObject]; } }
-        public static Keyword Is { get { return allKeywords[KeywordID.Is]; } }
-        public static Keyword Struct { get { return allKeywords[KeywordID.Struct]; } }
-        public static Keyword EndStruct { get { return allKeywords[KeywordID.EndStruct]; } }
+        [StaticToken(typeof(FO4GameInfo))]
+        public static readonly Keyword DebugOnly = new Keyword(KeywordID.DebugOnly, KeywordAttribute.Attribute);
+        [StaticToken(typeof(FO4GameInfo))]
+        public static readonly Keyword BetaOnly = new Keyword(KeywordID.BetaOnly, KeywordAttribute.Attribute);
+        [StaticToken(typeof(FO4GameInfo))]
+        public static readonly Keyword Const = new Keyword(KeywordID.Const, KeywordAttribute.Attribute);
+        [StaticToken(typeof(FO4GameInfo))]
+        public static readonly Keyword Mandatory = new Keyword(KeywordID.Mandatory, KeywordAttribute.Attribute);
+        [StaticToken(typeof(FO4GameInfo))]
+        public static readonly Keyword Var = new Keyword(KeywordID.Var, KeywordAttribute.NativeType);
+        [StaticToken(typeof(FO4GameInfo))]
+        public static readonly Keyword ScriptObject = new Keyword(KeywordID.ScriptObject, KeywordAttribute.NativeType);
+        [StaticToken(typeof(FO4GameInfo))]
+        public static readonly Keyword Is = new Keyword(KeywordID.Is, KeywordAttribute.SpecialOperator);
+        [StaticToken(typeof(FO4GameInfo))]
+        public static readonly Keyword Struct = new Keyword(KeywordID.Struct, KeywordAttribute.OutlineableBegin | KeywordAttribute.IndentIncreaseAtNewLine);
+        [StaticToken(typeof(FO4GameInfo))]
+        public static readonly Keyword EndStruct = new Keyword(KeywordID.EndStruct, KeywordAttribute.OutlineableEnd | KeywordAttribute.IndentDecrease);
+        [StaticToken(typeof(FO4GameInfo))]
+        public static readonly Keyword Group = new Keyword(KeywordID.Group, KeywordAttribute.OutlineableBegin | KeywordAttribute.IndentIncreaseAtNewLine);
+        [StaticToken(typeof(FO4GameInfo))]
+        public static readonly Keyword EndGroup = new Keyword(KeywordID.EndGroup, KeywordAttribute.OutlineableEnd | KeywordAttribute.IndentDecrease);
+
+        private static TokenManager<Keyword> manager = new TokenManager<Keyword>(true);
+        public static TokenManager<Keyword> Manager {
+            get { return manager; }
+        }
 
         #endregion
 
@@ -268,7 +321,7 @@ namespace Papyrus.Language.Components.Tokens {
             get { return indentBehavior; }
         }
 
-        public override bool IsOutlineableStart(IReadOnlyTokenSnapshotLine line) {
+        bool IOutlineableToken.IsOutlineableStart(IReadOnlyTokenSnapshotLine line) {
             if (attributes.HasFlag(KeywordAttribute.OutlineableBegin)) {
                 switch (id) {
                     case KeywordID.Property:
@@ -285,12 +338,21 @@ namespace Papyrus.Language.Components.Tokens {
             }
             return false;
         }
-        public override bool IsOutlineableEnd(Token startToken) {
+        bool IOutlineableToken.IsOutlineableEnd(IOutlineableToken startToken) {
             if (this.attributes.HasFlag(KeywordAttribute.OutlineableEnd)) {
                 return startToken is Keyword && ((Keyword)startToken).attributes.HasFlag(KeywordAttribute.OutlineableBegin) &&
-                    System.String.Equals(this.ToString(), System.String.Concat("End", startToken.Text), StringComparison.OrdinalIgnoreCase);
+                    System.String.Equals(this.ToString(), System.String.Concat("End", startToken.ToString()), StringComparison.OrdinalIgnoreCase);
             }
             return false;
+        }
+        bool IOutlineableToken.IsImplementation {
+            get { return true; }
+        }
+        string IOutlineableToken.CollapsedText {
+            get { return "..."; }
+        }
+        bool IOutlineableToken.CollapseFirstLine {
+            get { return false; }
         }
 
         public override bool IsCompileTimeConstant {
@@ -306,10 +368,14 @@ namespace Papyrus.Language.Components.Tokens {
         }
 
         public override int GetHashCode() {
-            return id.GetHashCode();
+            return Hash.GetMemberwiseHashCode(id, attributes, indentBehavior);
         }
         public override bool Equals(object obj) {
-            return obj is Keyword && this.id == ((Keyword)obj).id;
+            Keyword objAsKeyword = obj as Keyword;
+            return objAsKeyword != null &&
+                this.id == objAsKeyword.id &&
+                this.attributes == objAsKeyword.attributes &&
+                this.indentBehavior == objAsKeyword.indentBehavior;
         }
 
         public static implicit operator KeywordID(Keyword keyword) {
@@ -339,35 +405,20 @@ namespace Papyrus.Language.Components.Tokens {
         }
 
         public static Keyword Parse(string token) {
-            if (token.All(c => Char.IsLetter(c))) {
-                KeywordID id;
-                Keyword keyword;
-                if (Enum.TryParse(token, true, out id) &&
-                    allKeywords.TryGetValue(id, out keyword)) {
-                    return keyword;
-                }
+            return manager.ParseToken(token);
+
+            /*
+            KeywordID id;
+            if (Enum.TryParse(token, true, out id)) {
+                return allKeywords[id];
             }
             return null;
+            */
         }
     }
 
     internal sealed class KeywordParser : TokenParser {
-        /*
-        public bool TryParse(SnapshotSpan sourceSnapshotSpan, ref TokenScannerState state, TokenInfo token) {
-            if (state == TokenScannerState.Text) {
-                string text = sourceSnapshotSpan.GetText();
-                Keyword keyword = Keyword.Parse(text, 0, Delimiter.FindNext(text, 0));
-                if (keyword != null) {
-                    token.Type = keyword;
-                    token.Span = sourceSnapshotSpan.Subspan(0, keyword.Text.Length);
-                    return true;
-                }
-            }
-
-            return false;
-        }
-        */
-        public override bool TryParse(string sourceTextSpan, ref TokenScannerState state, out Token token) {
+        public override bool TryParse(string sourceTextSpan, ref TokenScannerState state, IEnumerable<Token> previousTokens, out Token token) {
             if (state == TokenScannerState.Text) {
                 int nextDelim = Delimiter.FindNext(sourceTextSpan, 0);
                 Keyword keyword = Keyword.Parse(nextDelim == sourceTextSpan.Length ? sourceTextSpan : sourceTextSpan.Remove(nextDelim));

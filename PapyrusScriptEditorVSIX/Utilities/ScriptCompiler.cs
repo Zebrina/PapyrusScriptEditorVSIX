@@ -1,9 +1,14 @@
 ﻿using Microsoft.VisualStudio.Shell;
+using Papyrus.Language;
 using System;
+using System.Collections;
+using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using System.IO;
 using System.Text;
 using System.Windows.Forms;
+using Papyrus.Common;
 
 namespace Papyrus.Utilities {
     /*
@@ -41,7 +46,7 @@ namespace Papyrus.Utilities {
 
     [Flags]
     public enum CompilerFlags : ushort {
-        None        = 0x0000,
+        //None        = 0x0000,
         Debug       = 0x0001,
         Optimize    = 0x0002,
         All         = 0x0004,
@@ -52,67 +57,85 @@ namespace Papyrus.Utilities {
     }
 
     public static class ScriptCompiler {
-        public const string OutputGuidString = "65B48410-04CA-4271-BFD9-5DE841EC15FC";
-
         private static string compilerPath = @"C:\Games\Steam\steamapps\common\Skyrim\Papyrus Compiler\PapyrusCompiler.exe";
 
-        private static OutputWindowPane output;
+        public static OutputWindowPane Output { get; private set; }
 
         public static void Initialize(Package package) {
-            output = OutputWindowPaneManager.Instance.CreateWindowPane(new Guid(OutputGuidString), "Papyrus Compiler");
-            output.Print("Papyrus Compiler initialized.");
+            Output = OutputWindowPaneManager.Instance.CreateWindowPane(new Guid(PapyrusGUID.ScriptCompilerOutputGuidString), "Papyrus Compiler");
         }
 
-        public static void StartCompileThread(string fileOrFolder, string outputFolder, string[] importFolders, string flags, CompilerFlags argumentFlags = CompilerFlags.None) {
+        public static void StartCompileThread(string fileOrFolder, string outputFolder, IEnumerable<string> additionalImportFolders = null, CompilerFlags additionalFlags = 0) {
             if (!File.Exists(compilerPath)) {
                 return;
+            }
+
+            List<string> importFolders = new List<string>();
+            importFolders.Add(Path.GetDirectoryName(fileOrFolder));
+            importFolders.AddRange(PapyrusEditor.Instance.CurrentGame.DefaultSourceFolders);
+            if (additionalImportFolders != null) {
+                importFolders.AddRange(additionalImportFolders);
             }
 
             ProcessStartInfo compileProcessInfo = new ProcessStartInfo();
 
             compileProcessInfo.FileName = compilerPath;
-            compileProcessInfo.Arguments = String.Format("\"{0}\" -f=\"{1}\" i=\"{2}\" -o=\"{3}\"{4}",
+            compileProcessInfo.Arguments = String.Format("\"{0}\" -f=\"{1}\" -i=\"{2}\" -o=\"{3}\"{4}",
                 fileOrFolder,
-                flags,
-                String.Join(";", importFolders),
+                PapyrusEditor.Instance.CurrentGame.CompilerFlags,
+                String.Join(";", importFolders.Distinct()),
                 outputFolder,
-                FormatCompilerFlags(argumentFlags));
+                FormatCompilerFlags(additionalFlags));
 
-            compileProcessInfo.UseShellExecute = true;
+            //output.PrintLine(compileProcessInfo.Arguments);
+
+            compileProcessInfo.UseShellExecute = false;
             compileProcessInfo.CreateNoWindow = true;
 
             compileProcessInfo.RedirectStandardOutput = true;
             compileProcessInfo.RedirectStandardError = true;
 
-            Process compileProcess = Process.Start(compileProcessInfo);
+            Process compileProcess = new Process();
+            compileProcess.StartInfo = compileProcessInfo;
 
             compileProcess.OutputDataReceived += CompileProcess_OutputDataReceived;
             compileProcess.ErrorDataReceived += CompileProcess_ErrorDataReceived;
-            compileProcess.Exited += CompileProcess_Exited;
-
+            //compileProcess.Exited += CompileProcess_Exited;
+            
             compileProcess.EnableRaisingEvents = true;
+
+            compileProcess.Start();
+            compileProcess.BeginOutputReadLine();
+            compileProcess.BeginErrorReadLine();
+        }
+
+        public static void ClearOutput() {
+            Output.Clear();
         }
 
         private static void CompileProcess_OutputDataReceived(object sender, DataReceivedEventArgs e) {
-            output.Print(e.Data);
-            output.Show();
+            Output.PrintLine(e.Data);
+            Output.Show();
         }
-
         private static void CompileProcess_ErrorDataReceived(object sender, DataReceivedEventArgs e) {
-            output.Print(e.Data);
-            output.Show();
+            Output.PrintLine(e.Data);
+            Output.Show();
         }
 
+        /*
         private static void CompileProcess_Exited(object sender, EventArgs e) {
-            MessageBox.Show("Compiler exit", (sender is Process).ToString(), MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+            Process p = sender as Process;
+            //MessageBox.Show(String.Format("Compiler exit: {0}", p.ExitCode), "Papyrus Compiler", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
         }
+        */
 
         private static string FormatCompilerFlags(CompilerFlags flags) {
             StringBuilder b = new StringBuilder();
 
             foreach (CompilerFlags f in Enum.GetValues(typeof(CompilerFlags))) {
-                if (f != CompilerFlags.None && flags.HasFlag(f)) {
-                    b.AppendFormat(" {0}", f);
+                if (flags.HasFlag(f)) {
+                    b.AppendWhiteSpace();
+                    b.Append(f);
                 }
             }
 

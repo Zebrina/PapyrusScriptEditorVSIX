@@ -3,6 +3,7 @@ using Microsoft.VisualStudio.Utilities;
 using Papyrus.Common;
 using Papyrus.Features;
 using System;
+using System.Collections.Generic;
 using System.ComponentModel.Composition;
 using System.Diagnostics;
 using System.Linq;
@@ -75,7 +76,7 @@ namespace Papyrus.Language.Components.Tokens {
             return false;
         }
         */
-        public override bool TryParse(string sourceTextSpan, ref TokenScannerState state, out Token token) {
+        public override bool TryParse(string sourceTextSpan, ref TokenScannerState state, IEnumerable<Token> previousTokens, out Token token) {
             if (state == TokenScannerState.Text) {
                 if (sourceTextSpan.First() == Characters.SemiColon) {
                     token = new Comment(sourceTextSpan, false);
@@ -126,7 +127,7 @@ namespace Papyrus.Language.Components.Tokens {
             return false;
         }
         */
-        public override bool TryParse(string sourceTextSpan, ref TokenScannerState state, out Token token) {
+        public override bool TryParse(string sourceTextSpan, ref TokenScannerState state, IEnumerable<Token> previousTokens, out Token token) {
             int endOffset, length;
             if (state == TokenScannerState.Text) {
                 if (String.Compare(sourceTextSpan, 0, Comment.BlockBegin, 0, Comment.BlockBegin.Length, StringComparison.OrdinalIgnoreCase) == 0) {

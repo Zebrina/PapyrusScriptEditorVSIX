@@ -4,7 +4,6 @@ using Microsoft.VisualStudio.Text.Editor;
 using Microsoft.VisualStudio.Text.Operations;
 using Microsoft.VisualStudio.Text.Tagging;
 using Microsoft.VisualStudio.Utilities;
-using Papyrus.Common;
 using Papyrus.Features;
 using Papyrus.Language;
 using Papyrus.Language.Components;
@@ -40,19 +39,15 @@ namespace Papyrus {
 
         private ITextView view;
         private ITextBuffer sourceBuffer;
-        private ITextSearchService textSearchService;
-        private ITextStructureNavigator textStructureNavigator;
         private NormalizedSnapshotSpanCollection wordSpans;
         private SnapshotSpan? currentWord;
         private SnapshotPoint requestedPoint;
 
         private object updateLock = new object();
 
-        public TokenHighlightingTagger(ITextView view, ITextBuffer sourceBuffer, ITextSearchService textSearchService, ITextStructureNavigator textStructureNavigator) {
+        public TokenHighlightingTagger(ITextView view, ITextBuffer sourceBuffer) {
             this.view = view;
             this.sourceBuffer = sourceBuffer;
-            this.textSearchService = textSearchService;
-            this.textStructureNavigator = textStructureNavigator;
             this.wordSpans = new NormalizedSnapshotSpanCollection();
             this.currentWord = null;
             this.view.Caret.PositionChanged += CaretPositionChanged;
@@ -73,8 +68,9 @@ namespace Papyrus {
         private void UpdateAtCaretPosition(CaretPosition caretPosition) {
             SnapshotPoint? point = caretPosition.Point.GetPoint(sourceBuffer, caretPosition.Affinity);
 
-            if (!point.HasValue)
+            if (!point.HasValue) {
                 return;
+            }
 
             // If the new caret position is still within the current word (and on the same snapshot), we don't need to check it 
             if (currentWord.HasValue && currentWord.Value.Snapshot == view.TextSnapshot
@@ -100,7 +96,7 @@ namespace Papyrus {
                     newWordSpans = new NormalizedSnapshotSpanCollection(tokenSnapshot.ParseableTokens.Where(t => t.TypeEquals(selectedToken)).Select(t => t.Span));
                 }
                 
-                // If another change hasn't happened, do a real update 
+                // If another change hasn't happened, do a real update.
                 if (currentRequest == requestedPoint) {
                     SynchronousUpdate(currentRequest, newWordSpans, selectedToken != null ? selectedToken.Span : default(SnapshotSpan));
                 }
@@ -122,16 +118,17 @@ namespace Papyrus {
         }
 
         public IEnumerable<ITagSpan<TokenHighlightingTag>> GetTags(NormalizedSnapshotSpanCollection spans) {
-            if (this.currentWord == null || this.wordSpans == null)
+            if (this.currentWord == null || this.wordSpans == null) {
                 yield break;
+            }
 
-            // Hold on to a "snapshot" of the word spans and current word, so that we maintain the same
-            // collection throughout
+            // Hold on to a "snapshot" of the word spans and current word, so that we maintain the same collection throughout.
             SnapshotSpan currentWord = this.currentWord.Value;
             NormalizedSnapshotSpanCollection wordSpans = this.wordSpans;
 
-            if (spans.Count == 0 || wordSpans.Count == 0)
+            if (spans.Count == 0 || wordSpans.Count == 0) {
                 yield break;
+            }
 
             // If the requested snapshot isn't the same as the one our words are on, translate our spans to the expected snapshot 
             if (spans.First().Snapshot != wordSpans.First().Snapshot) {
@@ -156,20 +153,13 @@ namespace Papyrus {
     [ContentType(PapyrusContentDefinition.ContentType)]
     [TagType(typeof(TextMarkerTag))]
     internal class TokenHighlightingTaggerProvider : IViewTaggerProvider {
-        [Import]
-        internal ITextSearchService TextSearchService { get; set; }
-
-        [Import]
-        internal ITextStructureNavigatorSelectorService TextStructureNavigatorSelector { get; set; }
-
         public ITagger<T> CreateTagger<T>(ITextView textView, ITextBuffer buffer) where T : ITag {
             // Provide highlighting only on the top buffer 
-            if (textView.TextBuffer != buffer)
+            if (textView.TextBuffer != buffer) {
                 return null;
+            }
 
-            ITextStructureNavigator textStructureNavigator = TextStructureNavigatorSelector.GetTextStructureNavigator(buffer);
-
-            return new TokenHighlightingTagger(textView, buffer, TextSearchService, textStructureNavigator) as ITagger<T>;
+            return new TokenHighlightingTagger(textView, buffer) as ITagger<T>;
         }
     }
 }

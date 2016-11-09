@@ -6,6 +6,7 @@
     <GuidSymbol value="{a4a96c7e-fc50-471c-9626-ce80e0dac70f}" name="guidPapyrusPackage" />
   
     <GuidSymbol value="{28e453ac-ff8a-485a-b191-56a251c78ede}" name="guidPapyrusPackageCmdSet">
+      <IDSymbol value="4129" name="TopLevelMenu" />
       <IDSymbol value="4128" name="MyMenuGroup" />
       <IDSymbol value="256" name="cmdidCompileScriptCommand" />
     </GuidSymbol>
@@ -20,9 +21,18 @@
     </GuidSymbol>
   </Symbols>
   <Commands package="guidPapyrusPackage">
+    <Menus>
+      <Menu guid="guidPapyrusPackageCmdSet" id="TopLevelMenu" priority="0x700" type="Menu">
+        <Parent guid="guidSHLMainMenu" id="IDG_VS_MM_TOOLSADDINS" />
+        <Strings>
+          <ButtonText>Papyrus</ButtonText>
+          <CommandName>Papyrus</CommandName>
+        </Strings>
+      </Menu>
+    </Menus>
     <Groups>
       <Group guid="guidPapyrusPackageCmdSet" id="MyMenuGroup" priority="0x0600">
-        <Parent guid="guidSHLMainMenu" id="IDM_VS_MENU_TOOLS" />
+        <Parent guid="guidPapyrusPackageCmdSet" id="TopLevelMenu" />
       </Group>
     </Groups>
     <Bitmaps>
@@ -33,7 +43,7 @@
         <Parent guid="guidPapyrusPackageCmdSet" id="MyMenuGroup" />
         <Icon guid="guidImages" id="bmpPic1" />
         <Strings>
-          <ButtonText>Invoke CompileScriptCommand</ButtonText>
+          <ButtonText>Compile Script</ButtonText>
         </Strings>
       </Button>
     </Buttons>

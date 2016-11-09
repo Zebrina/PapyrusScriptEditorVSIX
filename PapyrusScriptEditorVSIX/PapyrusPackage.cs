@@ -11,6 +11,8 @@ using System.Runtime.InteropServices;
 using Microsoft.VisualStudio.Shell;
 using Papyrus.Utilities;
 using Papyrus.Commands;
+using Papyrus.Language;
+using Papyrus.Language.Components.Tokens;
 
 namespace Papyrus {
     /// <summary>
@@ -32,16 +34,20 @@ namespace Papyrus {
     /// </remarks>
     [PackageRegistration(UseManagedResourcesOnly = true)]
     [InstalledProductRegistration("#110", "#112", "1.0", IconResourceID = 400)] // Info on this package for Help/About
-    [Guid(PackageGuidString)]
+    [Guid(PapyrusGUID.PackageGuidString)]
     [SuppressMessage("StyleCop.CSharp.DocumentationRules", "SA1650:ElementDocumentationMustBeSpelledCorrectly", Justification = "pkgdef, VS and vsixmanifest are valid VS terms")]
+    [ProvideLanguageService(PapyrusGUID.LanguageServiceGuidString, "Papyrus", 0,
+        AutoOutlining = true)]
     [ProvideMenuResource("Menus.ctmenu", 1)]
-    [DebuggerStepThrough]
+    [ProvideProjectFactory(typeof(PapyrusProjectFactory),
+        "Papyrus Project",
+        "Papyrus Project Files (*.pscproj);*.pscproj",
+        PapyrusContentDefinition.ProjectFileExtension, PapyrusContentDefinition.ProjectFileExtension,
+        "..\\..\\Templates\\Projects\\PapyrusProject",
+        LanguageVsTemplate = "Empty Papyrus Project",
+        NewProjectRequireNewFolderVsTemplate = false)]
+    //[DebuggerStepThrough]
     public sealed class PapyrusPackage : Package {
-        /// <summary>
-        /// PapyrusPackage GUID string.
-        /// </summary>
-        public const string PackageGuidString = "A4A96C7E-FC50-471C-9626-CE80E0DAC70F";
-
         //uint componentID;
 
         /// <summary>
@@ -59,6 +65,9 @@ namespace Papyrus {
             NativeMethods.ShowWindow(handle, NativeMethods.SW_SHOW);
             Console.WriteLine("YES!");
             */
+
+            //PapyrusGlobal.CurrentGame = new TESVGameInfo();
+            //PapyrusGlobal.OutputFolder = "C:";
         }
 
         #region Package Members
@@ -93,7 +102,10 @@ namespace Papyrus {
             }
             */
 
-            OutputWindowPaneManager.Instance.Initialize(this);
+            // Register .pscproj project type.
+            RegisterProjectFactory(new PapyrusProjectFactory(this));
+
+            OutputWindowPaneManager.Initialize(this);
 
             // Initialize library.
             //ScriptLibrary.Instance.Initialize(this);

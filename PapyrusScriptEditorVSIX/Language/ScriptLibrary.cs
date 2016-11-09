@@ -8,10 +8,11 @@ using System.IO;
 using System.Windows.Forms;
 
 namespace Papyrus.Language {
+    [Obsolete]
     /// <summary>
     /// Implemented as singleton.
     /// </summary>
-    public sealed class ScriptLibrary : Singleton<ScriptLibrary>, IDisposable {
+    public sealed class ScriptLibrary : IDisposable {
         private Package package;
         private ICollection<string> sourceFolders;
         private List<FileSystemWatcher> fileSystemWatchers;

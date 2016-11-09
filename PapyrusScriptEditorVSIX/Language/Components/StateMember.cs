@@ -1,0 +1,131 @@
+﻿using Papyrus.Language.Components.Tokens;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace Papyrus.Language.Components {
+    public sealed class StateMember : IScriptMember, IComparable<IScriptMember>, ICloneable, ISyntaxParsable {
+        private VariableType type;
+        private string name;
+        private VariableDefaultValue defaultValue;
+        private ScriptMemberAttributes attributes;
+        private FunctionMember getMethod;
+        private FunctionMember setMethod;
+
+        /*
+        private StateMember(VariableType type, string name, VariableDefaultValue defaultValue, FunctionMember getMethod, FunctionMember setMethod, IEnumerable<Keyword> attributes) {
+            this.type = type;
+            this.name = name;
+            this.defaultValue = defaultValue;
+            this.attributes.AddRange(attributes);
+            this.getMethod = getMethod;
+            this.setMethod = setMethod;
+        }
+        private StateMember(VariableType type, string name, VariableDefaultValue defaultValue, FunctionMember getMethod, FunctionMember setMethod, params Keyword[] attributes) :
+            this(type, name, defaultValue, getMethod, setMethod, attributes.AsEnumerable()) {
+        }
+        private StateMember(VariableType type, string name, VariableDefaultValue defaultValue, params Keyword[] attributes) :
+            this(type, name, defaultValue, null, null, attributes) {
+        }
+        */
+        private StateMember(StateMember other) {
+            this.type = other.type;
+            this.name = other.name;
+            this.defaultValue = other.defaultValue;
+            this.attributes = other.attributes;
+            this.getMethod = (FunctionMember)other.getMethod.Clone();
+            this.setMethod = (FunctionMember)other.setMethod.Clone();
+        }
+        private StateMember() {
+            type = default(VariableType);
+            name = String.Empty;
+            defaultValue = default(VariableDefaultValue);
+            attributes = default(ScriptMemberAttributes);
+            getMethod = null;
+            setMethod = null;
+        }
+
+        public string Name {
+            get { return name; }
+        }
+        public string GetDeclaration() {
+            StringBuilder b = new StringBuilder();
+
+            b.Append(type);
+            b.Append(' ');
+            b.Append(Keyword.Property);
+            b.Append(' ');
+            b.Append(name);
+            b.Append(defaultValue);
+            b.Append(attributes);
+
+            return b.ToString();
+        }
+        public string GetDefinition() {
+            if (getMethod != null && setMethod != null) {
+                return String.Concat(getMethod.GetDefinition(), Environment.NewLine, setMethod.GetDefinition());
+            }
+            else if (getMethod != null) {
+                return getMethod.GetDefinition();
+            }
+            else if (setMethod != null) {
+                return setMethod.GetDefinition();
+            }
+            return String.Empty;
+        }
+        bool IScriptMember.IsChildAccessible {
+            get { return true; }
+        }
+        IEnumerable<Parameter> IScriptMember.Parameters {
+            get { return new Parameter[0]; }
+        }
+        bool IScriptMember.Hidden {
+            get { return attributes.Contains(Keyword.Hidden); }
+        }
+
+        public int Length {
+            get { return type.Length + 2 + defaultValue.Length + attributes.Length; }
+        }
+
+        public bool TryParse(IReadOnlyList<Token> tokens, int offset) {
+            if (type.TryParse(tokens, offset)) {
+                int remainingCount = tokens.Count - offset;
+                if (remainingCount >= 2 && tokens[offset] == Keyword.Property && tokens[offset + 1].TypeID == TokenTypeID.Identifier) {
+                    name = tokens[offset + 1].Text;
+                    offset += 2;
+
+                    defaultValue.TryParse(tokens, offset);
+                    offset += defaultValue.Length;
+                    attributes.TryParse(tokens, offset);
+
+                    getMethod = null;
+                    setMethod = null;
+
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        int IComparable<IScriptMember>.CompareTo(IScriptMember other) {
+            return String.Compare(this.Name, other.Name, StringComparison.OrdinalIgnoreCase);
+        }
+
+        public object Clone() {
+            return new StateMember(this);
+        }
+
+        private static StateMember prototype = new StateMember();
+        public static bool TryParse(IReadOnlyList<Token> tokens, int offset, out IScriptMember result) {
+            if (prototype.TryParse(tokens, offset)) {
+                result = (StateMember)prototype.MemberwiseClone();
+                return true;
+            }
+            result = null;
+            return false;
+        }
+    }
+}

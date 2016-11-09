@@ -1,0 +1,17 @@
+﻿<VSTemplate Version="2.0.0" Type="Project" xmlns="http://schemas.microsoft.com/developer/vstemplate/2005">
+  <TemplateData>
+    <Name>Lua Application</Name>
+    <Description>An empty papyrus project</Description>
+    <Icon>PapyrusProject.ico</Icon>
+    <ProjectType>Papyrus</ProjectType>
+    <SortOrder>50</SortOrder>
+    <NumberOfParentCategoriesToRollUp>2</NumberOfParentCategoriesToRollUp>
+    <CreateNewFolder>false</CreateNewFolder>
+    <DefaultName>PapyrusProject</DefaultName>
+    <ProvideDefaultName>true</ProvideDefaultName>
+  </TemplateData>
+  <TemplateContent>
+    <Project File="PapyrusProject.pscproj" ReplaceParameters="true">
+    </Project>
+  </TemplateContent>
+</VSTemplate>

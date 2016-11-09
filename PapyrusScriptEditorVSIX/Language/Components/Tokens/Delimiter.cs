@@ -107,6 +107,10 @@ namespace Papyrus.Language.Components.Tokens {
                 return table;
             }
         }
+        
+        internal static void Initialize() {
+
+        }
 
         #endregion
 
@@ -207,7 +211,7 @@ namespace Papyrus.Language.Components.Tokens {
     }
 
     internal sealed class DelimiterParser : TokenParser {
-        public override bool TryParse(string sourceTextSpan, ref TokenScannerState state, out Token token) {
+        public override bool TryParse(string sourceTextSpan, ref TokenScannerState state, IEnumerable<Token> previousTokens, out Token token) {
             if (state == TokenScannerState.Text) {
                 Delimiter delimiter = Delimiter.FromChar(sourceTextSpan.First());
                 if (delimiter != null) {

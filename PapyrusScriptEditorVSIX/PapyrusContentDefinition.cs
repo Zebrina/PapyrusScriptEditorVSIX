@@ -4,7 +4,10 @@ using System.ComponentModel.Composition;
 namespace Papyrus {
     internal static class PapyrusContentDefinition {
         public const string ContentType = "papyrus";
+        public const string FileTypeName = "psc";
         public const string FileExtension = ".psc";
+        public const string ProjectFileTypeName = "pscproj";
+        public const string ProjectFileExtension = ".pscproj";
 
         [Export]
         [Name(ContentType)]

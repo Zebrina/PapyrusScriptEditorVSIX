@@ -3,6 +3,7 @@ using Microsoft.VisualStudio.Utilities;
 using Papyrus.Common;
 using Papyrus.Features;
 using System;
+using System.Collections.Generic;
 using System.ComponentModel.Composition;
 using System.Diagnostics;
 using System.Linq;
@@ -82,22 +83,7 @@ namespace Papyrus.Language.Components.Tokens {
     }
 
     internal sealed class StringLiteralParser : TokenParser {
-        /*
-        public bool TryParse(SnapshotSpan sourceSnapshotSpan, ref TokenScannerState state, TokenInfo token) {
-            if (state == TokenScannerState.Text) {
-                string text = sourceSnapshotSpan.GetText();
-                if (text.FirstOrDefault() == (char)Delimiter.QuotationMark) {
-                    int length = Delimiter.FindNext(text, 1, Delimiter.QuotationMark);
-                    token.Type = new StringLiteral(text.Substring(1, length));
-                    token.Span = sourceSnapshotSpan.Subspan(0, length + 1);
-                    return true;
-                }
-            }
-
-            return false;
-        }
-        */
-        public override bool TryParse(string sourceTextSpan, ref TokenScannerState state, out Token token) {
+        public override bool TryParse(string sourceTextSpan, ref TokenScannerState state, IEnumerable<Token> previousTokens, out Token token) {
             if (state == TokenScannerState.Text) {
                 if (sourceTextSpan.FirstOrDefault() == Characters.QuotationMark) {
                     int length = Delimiter.FindNext(sourceTextSpan, 1, Characters.QuotationMark);

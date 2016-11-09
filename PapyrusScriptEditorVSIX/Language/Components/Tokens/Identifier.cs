@@ -2,6 +2,7 @@
 using Microsoft.VisualStudio.Utilities;
 using Papyrus.Features;
 using System;
+using System.Collections.Generic;
 using System.ComponentModel.Composition;
 using System.Diagnostics;
 using System.Linq;
@@ -30,12 +31,30 @@ namespace Papyrus.Language.Components.Tokens {
         private static ClassificationTypeDefinition typeDefinition;
     }
 
+    public enum IdentifierType {
+        Unknown,
+        Local,
+        Field,
+        Property,
+        Function,
+        Event,
+        State,
+    }
+
     [DebuggerStepThrough]
-    public sealed class Identifier : Token, ISyntaxColorable {
+    public class Identifier : Token, ISyntaxColorable {
+        public static TokenManager<Identifier> Manager = new TokenManager<Identifier>(false);
+
+        public IdentifierType type;
         private string name;
 
-        public Identifier(string name) {
+        public Identifier(IdentifierType type, string name) {
+            this.type = type;
             this.name = name;
+
+        }
+        public Identifier(string name) :
+            this(IdentifierType.Unknown, name) {
         }
 
         public override string Text {
@@ -98,6 +117,38 @@ namespace Papyrus.Language.Components.Tokens {
         }
     }
 
+    /*
+    public sealed class LocalVariableName : Identifier {
+        public LocalVariableName(string name) :
+            base(name) {
+        }
+    }
+    */
+
+    public sealed class FieldName : Identifier {
+        public FieldName(string name) :
+            base(name) {
+        }
+    }
+
+    public sealed class PropertyName : Identifier {
+        public PropertyName(string name) :
+            base(name) {
+        }
+    }
+
+    public sealed class FunctionName : Identifier {
+        public FunctionName(string name) :
+            base(name) {
+        }
+    }
+
+    public sealed class EventName : Identifier {
+        public EventName(string name) :
+            base(name) {
+        }
+    }
+
     internal sealed class IdentifierParser : TokenParser {
         /*
         public bool TryParse(SnapshotSpan sourceSnapshotSpan, ref TokenScannerState state, TokenInfo token) {
@@ -114,16 +165,34 @@ namespace Papyrus.Language.Components.Tokens {
             return false;
         }
         */
-        public override bool TryParse(string sourceTextSpan, ref TokenScannerState state, out Token token) {
+        public override bool TryParse(string sourceTextSpan, ref TokenScannerState state, IEnumerable<Token> previousTokens, out Token token) {
+            token = null;
+
             if (state == TokenScannerState.Text) {
                 int length = Delimiter.FindNext(sourceTextSpan, 0);
                 if (Identifier.IsValid(sourceTextSpan.Substring(0, length))) {
-                    token = new Identifier(sourceTextSpan.Substring(0, length));
-                    return true;
+                    string name = sourceTextSpan.Substring(0, length);
+
+                    Token lastToken = previousTokens.LastOrDefault();
+                    if (lastToken != null && lastToken.IsVariableType) {
+                        token = new FieldName(name);
+                    }
+                    else if (lastToken == Keyword.Property) {
+                        token = new PropertyName(name);
+                    }
+                    else if (lastToken == Keyword.Function) {
+                        token = new FunctionName(name);
+                    }
+                    else if (lastToken == Keyword.Event) {
+                        token = new EventName(name);
+                    }
+                    else {
+                        token = new Identifier(name);
+                    }
                 }
             }
-            token = null;
-            return false;
+
+            return token != null;
         }
     }
 }

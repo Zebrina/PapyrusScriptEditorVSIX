@@ -7,12 +7,14 @@ using System.Diagnostics;
 namespace Papyrus.Language.Components {
     public interface IReadOnlyTokenSnapshot : IReadOnlyCollection<TokenSnapshotLine> {
         ITextSnapshot BaseTextSnapshot { get; }
+        PapyrusTokenInfo this[int line, int position] { get; }
         IEnumerable<PapyrusTokenInfo> Tokens { get; }
         IEnumerable<PapyrusTokenInfo> ParseableTokens { get; }
         bool IsEmpty { get; }
+        bool IndexOfToken(Predicate<PapyrusTokenInfo> pred, out int lineNumber, out int linePosition);
     }
 
-    [DebuggerStepThrough]
+    //[DebuggerStepThrough]
     public sealed class TokenSnapshot : IReadOnlyTokenSnapshot, IReadOnlyCollection<TokenSnapshotLine>, ICollection<TokenSnapshotLine>, IEnumerable<TokenSnapshotLine>, IEnumerable {
         /*
         private class KeyComparer : IComparer<ITextSnapshotLine> {
@@ -35,6 +37,9 @@ namespace Papyrus.Language.Components {
 
         public TokenSnapshotLine this[int position] {
             get { return container[position]; }
+        }
+        public PapyrusTokenInfo this[int line, int position] {
+            get { return container[line][position]; }
         }
         public int Count {
             get { return container.Count; }
@@ -73,6 +78,23 @@ namespace Papyrus.Language.Components {
 
         public bool Contains(TokenSnapshotLine item) {
             return container.Contains(item);
+        }
+
+        public bool IndexOfToken(Predicate<PapyrusTokenInfo> pred, out int lineNumber, out int linePosition) {
+            for (int i = 0; i < container.Count; ++i) {
+                TokenSnapshotLine snapshotLine = container[i];
+                for (int j = 0; j < snapshotLine.Count; ++j) {
+                    if (pred.Invoke(snapshotLine[j])) {
+                        lineNumber = i;
+                        linePosition = j;
+                        return true;
+                    }
+                }
+            }
+
+            lineNumber = -1;
+            linePosition = -1;
+            return false;
         }
 
         public void CopyTo(TokenSnapshotLine[] array, int arrayIndex) {

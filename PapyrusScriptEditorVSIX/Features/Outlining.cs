@@ -2,6 +2,7 @@
 using Microsoft.VisualStudio.Text.Tagging;
 using Microsoft.VisualStudio.Utilities;
 using Papyrus.Language;
+using Papyrus.Language.Components;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.Composition;
@@ -11,13 +12,45 @@ using System.Linq;
 // https://msdn.microsoft.com/en-us/library/ee197665.aspx
 
 namespace Papyrus.Features {
+    public interface IOutlineableToken {
+        bool IsOutlineableStart(IReadOnlyTokenSnapshotLine line);
+        bool IsOutlineableEnd(IOutlineableToken startToken);
+        bool IsImplementation { get; }
+        string CollapsedText { get; }
+        bool CollapseFirstLine { get; }
+    }
+
+    internal sealed class OutliningTag : IOutliningRegionTag {
+        private IOutlineableToken token;
+        private string hintText;
+
+        public OutliningTag(IOutlineableToken token, string hintText) {
+            this.token = token;
+            this.hintText = hintText;
+        }
+
+        bool IOutliningRegionTag.IsDefaultCollapsed {
+            get { return false; }
+        }
+        bool IOutliningRegionTag.IsImplementation {
+            get { return token.IsImplementation; }
+        }
+
+        object IOutliningRegionTag.CollapsedForm {
+            get { return token.CollapsedText; }
+        }
+        object IOutliningRegionTag.CollapsedHintForm {
+            get { return hintText; }
+        }
+    }
+
     /// <summary>
     /// Outlining for properties, functions, events and states.
     /// https://msdn.microsoft.com/en-us/library/ee197665.aspx
     /// </summary>
     internal sealed class OutliningTagger : ITagger<IOutliningRegionTag> {
         private class PartialRegion {
-            public Token Outlineable { get; set; }
+            public IOutlineableToken OutlineableToken { get; set; }
             public int StartLine { get; set; }
             public PartialRegion PartialParent { get; set; }
         }
@@ -46,8 +79,9 @@ namespace Papyrus.Features {
             if (spans.Count == 0) {
                 yield break;
             }
-            List<Region> currentRegions = this.regions;
-            ITextSnapshot currentSnapshot = this.snapshot;
+
+            List<Region> currentRegions = regions;
+            ITextSnapshot currentSnapshot = snapshot;
             SnapshotSpan entire = new SnapshotSpan(spans[0].Start, spans[spans.Count - 1].End).TranslateTo(currentSnapshot, SpanTrackingMode.EdgeExclusive);
             int startLineNumber = entire.Start.GetContainingLine().LineNumber;
             int endLineNumber = entire.End.GetContainingLine().LineNumber;
@@ -58,8 +92,8 @@ namespace Papyrus.Features {
                     var endLine = currentSnapshot.GetLineFromLineNumber(region.EndLine);
 
                     yield return new TagSpan<IOutliningRegionTag>(
-                        new SnapshotSpan(startLine.End, endLine.End),
-                        new OutliningRegionTag(false, true, "...", (new SnapshotSpan(startLine.Start, endLine.End)).GetText()));
+                        new SnapshotSpan(region.OutlineableToken.CollapseFirstLine ? startLine.Start : startLine.End, endLine.End),
+                        new OutliningTag(region.OutlineableToken, currentSnapshot.GetText(startLine.Start, endLine.End - startLine.Start)));
                 }
             }
         }
@@ -76,23 +110,26 @@ namespace Papyrus.Features {
 
             foreach (var line in BackgroundParser.Singleton.TokenSnapshot) {
                 foreach (var token in line) {
-                    if (token.Type.IsOutlineableStart(line)) {
-                        currentRegion = new PartialRegion() {
-                            Outlineable = token.Type,
-                            StartLine = newSnapshot.GetLineFromPosition(token.Span.Start.Position).LineNumber,
-                            PartialParent = currentRegion,
-                        };
-                        break;
-                    }
-                    else if (currentRegion != null && token.Type.IsOutlineableEnd(currentRegion.Outlineable)) {
-                        newRegions.Add(new Region() {
-                            Outlineable = currentRegion.Outlineable,
-                            StartLine = currentRegion.StartLine,
-                            EndLine = newSnapshot.GetLineFromPosition(token.Span.Start.Position).LineNumber,
-                        });
+                    IOutlineableToken outlineableToken = token.Type as IOutlineableToken;
+                    if (outlineableToken != null) {
+                        if (outlineableToken.IsOutlineableStart(line)) {
+                            currentRegion = new PartialRegion() {
+                                OutlineableToken = outlineableToken,
+                                StartLine = newSnapshot.GetLineFromPosition(token.Span.Start.Position).LineNumber,
+                                PartialParent = currentRegion,
+                            };
+                            break;
+                        }
+                        else if (currentRegion != null && outlineableToken.IsOutlineableEnd(currentRegion.OutlineableToken)) {
+                            newRegions.Add(new Region() {
+                                OutlineableToken = currentRegion.OutlineableToken,
+                                StartLine = currentRegion.StartLine,
+                                EndLine = newSnapshot.GetLineFromPosition(token.Span.Start.Position).LineNumber,
+                            });
 
-                        currentRegion = currentRegion.PartialParent;
-                        break;
+                            currentRegion = currentRegion.PartialParent;
+                            break;
+                        }
                     }
                 }
             }
@@ -149,11 +186,9 @@ namespace Papyrus.Features {
     [DebuggerStepThrough]
     internal sealed class OutliningTaggerProvider : ITaggerProvider {
         public ITagger<T> CreateTagger<T>(ITextBuffer buffer) where T : ITag {
-            //create a single tagger for each buffer.
-            Func<ITagger<T>> sc = delegate () {
+            return buffer.Properties.GetOrCreateSingletonProperty(delegate () {
                 return new OutliningTagger(buffer) as ITagger<T>;
-            };
-            return buffer.Properties.GetOrCreateSingletonProperty(sc);
+            });
         }
     }
 } 

@@ -129,6 +129,8 @@ namespace Papyrus.Language.Components.Tokens {
     }
 
     public sealed partial class ScriptObject : Token, ISyntaxColorable, ICollection<IScriptMember>, IEnumerable<IScriptMember>, ICloneable {
+        private static readonly TokenManager<ScriptObject> manager = new TokenManager<ScriptObject>(false);
+
         private class ScriptMemberComparer : IComparer<IScriptMember> {
             public int Compare(IScriptMember x, IScriptMember y) {
                 return String.Compare(x.Name, y.Name, StringComparison.OrdinalIgnoreCase);
@@ -245,26 +247,32 @@ namespace Papyrus.Language.Components.Tokens {
             Manager.Add(scriptName, scriptObject);
 
             string textLine;
-            var tokens = new List<Token>();
+            var parsedLineQueue = new List<Token>();
             while ((textLine = stream.ReadLine()) != null) {
-                scanner.ScanLine(textLine, tokens);
-                if (tokens.Count > 0) {
-                    if (!scriptObject.Info.IsValid) {
-                        scriptObject.members.Clear();
-                        if (!scriptObject.Info.TryParse(tokens, 0)) {
-                            return null;
-                        }
-                    }
+                var parsedLine = new List<Token>();
+                scanner.ScanLine(textLine, parsedLineQueue);
+                parsedLineQueue.AddRange(parsedLine);
 
+                if (parsedLine.Count == 0 || parsedLine.Any(t => t.ExtendsLine == true)) {
+                    continue;
+                }
+
+                if (!scriptObject.Info.IsValid) {
+                    scriptObject.members.Clear();
+                    if (!scriptObject.Info.TryParse(parsedLineQueue, 0)) {
+                        return null;
+                    }
+                }
+                else {
                     IScriptMember member;
-                    if (PropertyMember.TryParse(tokens, 0, out member) ||
-                        FunctionMember.TryParse(tokens, 0, out member) ||
-                        EventMember.TryParse(tokens, 0, out member)) {
+                    if (PropertyMember.TryParse(parsedLineQueue, 0, out member) ||
+                        FunctionMember.TryParse(parsedLineQueue, 0, out member) ||
+                        EventMember.TryParse(parsedLineQueue, 0, out member)) {
                         scriptObject.members.Add(member);
                     }
-
-                    tokens.Clear();
                 }
+
+                parsedLineQueue.Clear();
             }
 
             return scriptObject;
@@ -357,7 +365,7 @@ namespace Papyrus.Language.Components.Tokens {
                     return true;
                 }
 
-                string filePath = ScriptLibrary.Instance.FindFileInSourceFolders(key);
+                string filePath = PapyrusEditor.Instance.CurrentGame.FindFileInSourceFolders(key);
                 value = TryParse(filePath);
 
                 return value != null;
@@ -408,7 +416,7 @@ namespace Papyrus.Language.Components.Tokens {
             return false;
         }
         */
-        public override bool TryParse(string sourceTextSpan, ref TokenScannerState state, out Token token) {
+        public override bool TryParse(string sourceTextSpan, ref TokenScannerState state, IEnumerable<Token> previousTokens, out Token token) {
             if (state == TokenScannerState.Text) {
                 int nextDelimiter = Delimiter.FindNext(sourceTextSpan, 0);
                 if (nextDelimiter > 0) {

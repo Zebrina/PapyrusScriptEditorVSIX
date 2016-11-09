@@ -129,6 +129,10 @@ namespace Papyrus.Language.Components.Tokens {
             get { return (IReadOnlyCollection<Operator>)collection.Values; }
         }
 
+        internal static void Initialize() {
+
+        }
+
         #endregion
 
         private OperatorSymbol symbol;
@@ -212,7 +216,7 @@ namespace Papyrus.Language.Components.Tokens {
             return false;
         }
         */
-        public override bool TryParse(string sourceTextSpan, ref TokenScannerState state, out Token token) {
+        public override bool TryParse(string sourceTextSpan, ref TokenScannerState state, IEnumerable<Token> previousTokens, out Token token) {
             if (state == TokenScannerState.Text) {
                 Operator op = Operator.Parse(sourceTextSpan, 0);
                 if (op != null) {

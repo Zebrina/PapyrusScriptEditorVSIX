@@ -46,13 +46,6 @@ namespace Papyrus.Language {
             return false;
         }
 
-        public virtual bool IsOutlineableStart(IReadOnlyTokenSnapshotLine line) {
-            return false;
-        }
-        public virtual bool IsOutlineableEnd(Token startToken) {
-            return false;
-        }
-
         public virtual bool IsCompileTimeConstant {
             get { return false; }
         }
@@ -91,5 +84,14 @@ namespace Papyrus.Language {
         public static bool operator !=(Token x, Token y) {
             return !Equals(x, y);
         }
+
+        /*
+        public static Token Parse(string tokenStr) {
+            return null;
+        }
+        public static bool TryParse(string tokenStr, Token token) {
+            return false;
+        }
+        */
     }
 }

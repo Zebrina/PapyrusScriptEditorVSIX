@@ -84,7 +84,7 @@ namespace Papyrus.Features {
                 currentChar = currentChar.TranslateTo(spans.First().Snapshot, PointTrackingMode.Positive);
             }
 
-            SnapshotPoint previousChar = currentChar - 1;
+            SnapshotPoint previousChar = currentChar == 0 ? currentChar : currentChar - 1;
 
             IReadOnlyTokenSnapshot parsedSnapshot = BackgroundParser.Singleton.TokenSnapshot;
             if (parsedSnapshot == null) {
@@ -95,11 +95,12 @@ namespace Papyrus.Features {
 
             try {
                 parsedLine = parsedSnapshot.Single(l => l.Any(t => {
-                    return t.Span.Contains(currentChar) ||
-                        (currentChar > 0 && t.Span.Contains(previousChar));
+                    return t.Span.Contains(currentChar) || (previousChar != currentChar && t.Span.Contains(previousChar));
                 }));
             }
+#pragma warning disable CS0168 // Variable is declared but never used
             catch (InvalidOperationException e) {
+#pragma warning restore CS0168 // Variable is declared but never used
                 yield break;
             }
 

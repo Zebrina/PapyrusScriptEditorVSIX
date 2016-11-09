@@ -3,6 +3,7 @@ using Microsoft.VisualStudio.Utilities;
 using Papyrus.Common;
 using Papyrus.Features;
 using System;
+using System.Collections.Generic;
 using System.ComponentModel.Composition;
 using System.Diagnostics;
 using System.Linq;
@@ -135,7 +136,7 @@ namespace Papyrus.Language.Components.Tokens {
     }
 
     internal sealed class NumericLiteralParser : TokenParser {
-        public override bool TryParse(string sourceTextSpan, ref TokenScannerState state, out Token token) {
+        public override bool TryParse(string sourceTextSpan, ref TokenScannerState state, IEnumerable<Token> previousTokens, out Token token) {
             if (state == TokenScannerState.Text) {
                 NumericLiteral numericLiteral = NumericLiteral.Parse(sourceTextSpan);
                 if (numericLiteral != null) {

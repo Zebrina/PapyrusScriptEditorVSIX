@@ -69,19 +69,24 @@
     <Compile Include="Common\StringBuilderExtended.cs" />
     <Compile Include="Common\TextSnapshotExtensionMethods.cs" />
     <Compile Include="Common\NativeMethods.cs" />
-    <Compile Include="Common\Singleton.cs" />
     <Compile Include="Common\StringsExtensionMethods.cs" />
     <Compile Include="Common\Unsafe.cs" />
     <Compile Include="Features\BackgroundParser.cs" />
     <Compile Include="Features\BraceMatching.cs" />
+    <Compile Include="Features\IntellisenseController.cs" />
+    <Compile Include="Features\QuickInfo.cs" />
     <Compile Include="Features\StatementCompletion.cs" />
     <Compile Include="Features\Outlining.cs" />
     <Compile Include="Features\TokenHighlighting.cs" />
+    <Compile Include="Language\Attributes\StaticTokenAttribute.cs" />
     <Compile Include="Language\Components\ParameterList.cs" />
     <Compile Include="Language\Components\ScriptMemberAttributes.cs" />
+    <Compile Include="Language\Components\StateMember.cs" />
     <Compile Include="Language\Components\VariableDefaultValue.cs" />
     <Compile Include="Language\Components\VariableType.cs" />
     <Compile Include="Language\Exceptions\TokenArgumentException.cs" />
+    <Compile Include="Language\FO4\FO4GameInfo.cs" />
+    <Compile Include="Language\IGameInfo.cs" />
     <Compile Include="Language\ISyntaxParsable.cs" />
     <Compile Include="Language\Components\Tokens\Comment.cs" />
     <Compile Include="Language\Components\Tokens\CreationKitDocumentation.cs" />
@@ -101,31 +106,56 @@
     <Compile Include="Language\Components\Tokens\ScriptObject.cs" />
     <Compile Include="Language\Components\Tokens\StringLiteral.cs" />
     <Compile Include="Language\PapyrusTokenInfo.cs" />
+    <Compile Include="Language\TESV\TESVGameInfo.cs" />
     <Compile Include="Language\Token.cs" />
     <Compile Include="Language\ScriptLibrary.cs" />
-    <Compile Include="Language\ScriptParser.cs" />
+    <Compile Include="Language\TokenManager.cs" />
     <Compile Include="Language\TokenScanner.cs" />
     <Compile Include="PapyrusContentDefinition.cs" />
+    <Compile Include="PapyrusEditor.cs" />
+    <Compile Include="PapyrusGUID.cs" />
     <Compile Include="PapyrusPackage.cs" />
+    <Compile Include="PapyrusProjectFactory.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Features\SyntaxColorization.cs" />
     <Compile Include="Utilities\OutputWindowPane.cs" />
     <Compile Include="Utilities\OutputWindowPaneManager.cs" />
+    <Compile Include="Utilities\PapyrusFile.cs" />
     <Compile Include="Utilities\ScriptAssembler.cs" />
     <Compile Include="Utilities\ScriptCompiler.cs" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="Templates\Projects\PapyrusProject\PapyrusProject.ico" />
+    <None Include="Templates\Projects\PapyrusProject\PapyrusProject.vstemplate">
+      <SubType>Designer</SubType>
+    </None>
     <None Include="Key.snk" />
     <None Include="packages.config" />
     <None Include="ResetExperiementalInstance.bat" />
     <None Include="source.extension.vsixmanifest">
       <SubType>Designer</SubType>
     </None>
+    <Content Include="Features\Snippets\1033\PapyrusSnippets.xml">
+      <SubType>Designer</SubType>
+    </Content>
+    <Content Include="Resources\PapyrusPackage.png" />
+    <Content Include="Resources\PSCFile.ico" />
+    <Content Include="Resources\PSCFile_256x.png" />
+    <Content Include="Resources\PSCProject.ico" />
+    <Content Include="Resources\PSCProject_256x.png" />
+    <Content Include="Templates\NewItem\TESVPapyrusScript.psc" />
+    <None Include="Templates\NewItem\TESVMCMScript.psc" />
+    <None Include="Templates\Projects\PapyrusProject\PapyrusProject.pscproj">
+      <SubType>Designer</SubType>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <Content Include="Commands\Resources\CompileScriptCommand.png" />
     <Content Include="index.html" />
-    <Content Include="Resources\PapyrusPackage.ico" />
+    <Content Include="Resources\PapyrusPackage.ico">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <IncludeInVSIX>true</IncludeInVSIX>
+    </Content>
     <Content Include="stylesheet.css" />
   </ItemGroup>
   <ItemGroup>
@@ -267,8 +297,7 @@
     </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
-    <Folder Include="Language\Fallout4\" />
-    <Folder Include="Language\Skyrim\" />
+    <Folder Include="Snippets\" />
   </ItemGroup>
   <ItemGroup>
     <VSCTCompile Include="PapyrusPackage.vsct">
@@ -286,8 +315,7 @@
   </Target>
   <Import Project="..\packages\Microsoft.VSSDK.BuildTools.14.3.25407\build\Microsoft.VSSDK.BuildTools.targets" Condition="Exists('..\packages\Microsoft.VSSDK.BuildTools.14.3.25407\build\Microsoft.VSSDK.BuildTools.targets')" />
   <PropertyGroup>
-    <PreBuildEvent>
-    </PreBuildEvent>
+    <PreBuildEvent>rmdir /s /q "C:\Users\Sabrina\AppData\Local\Microsoft\VisualStudio\14.0Exp\ComponentModelCache"</PreBuildEvent>
   </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
@@ -296,4 +324,5 @@
   <Target Name="AfterBuild">
   </Target>
   -->
+  <!-- This imports the files which makes up the project base classes -->
 </Project>

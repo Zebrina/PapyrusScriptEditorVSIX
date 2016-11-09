@@ -4,11 +4,16 @@
 // </copyright>
 //------------------------------------------------------------------------------
 
+using EnvDTE;
+using Microsoft.VisualStudio;
+using Microsoft.VisualStudio.Shell;
+using Microsoft.VisualStudio.Shell.Interop;
+using Microsoft.VisualStudio.TextManager.Interop;
+using Papyrus.Utilities;
 using System;
 using System.ComponentModel.Design;
 using System.Globalization;
-using Microsoft.VisualStudio.Shell;
-using Microsoft.VisualStudio.Shell.Interop;
+using System.IO;
 
 namespace Papyrus.Commands {
     /// <summary>
@@ -19,11 +24,6 @@ namespace Papyrus.Commands {
         /// Command ID.
         /// </summary>
         public const int CommandId = 256;
-
-        /// <summary>
-        /// Command menu group (command set GUID).
-        /// </summary>
-        public static readonly Guid CommandSet = new Guid("28e453ac-ff8a-485a-b191-56a251c78ede");
 
         /// <summary>
         /// VS Package that provides this command, not null.
@@ -44,7 +44,7 @@ namespace Papyrus.Commands {
 
             OleMenuCommandService commandService = this.ServiceProvider.GetService(typeof(IMenuCommandService)) as OleMenuCommandService;
             if (commandService != null) {
-                var menuCommandID = new CommandID(CommandSet, CommandId);
+                var menuCommandID = new CommandID(new Guid(PapyrusGUID.CommandSetGuidString), CommandId);
                 var menuItem = new MenuCommand(this.MenuItemCallback, menuCommandID);
                 commandService.AddCommand(menuItem);
             }
@@ -53,18 +53,13 @@ namespace Papyrus.Commands {
         /// <summary>
         /// Gets the instance of the command.
         /// </summary>
-        public static CompileScriptCommand Instance {
-            get;
-            private set;
-        }
+        public static CompileScriptCommand Instance { get; private set; }
 
         /// <summary>
         /// Gets the service provider from the owner package.
         /// </summary>
         private IServiceProvider ServiceProvider {
-            get {
-                return this.package;
-            }
+            get { return this.package; }
         }
 
         /// <summary>
@@ -83,17 +78,26 @@ namespace Papyrus.Commands {
         /// <param name="sender">Event sender.</param>
         /// <param name="e">Event args.</param>
         private void MenuItemCallback(object sender, EventArgs e) {
+            /*
             string message = string.Format(CultureInfo.CurrentCulture, "Inside {0}.MenuItemCallback()", this.GetType().FullName);
             string title = "CompileScriptCommand";
+            */
 
-            // Show a message box to prove we were here
-            VsShellUtilities.ShowMessageBox(
-                this.ServiceProvider,
-                message,
-                title,
-                OLEMSGICON.OLEMSGICON_INFO,
-                OLEMSGBUTTON.OLEMSGBUTTON_OK,
-                OLEMSGDEFBUTTON.OLEMSGDEFBUTTON_FIRST);
+            DTE dte = (DTE)ServiceProvider.GetService(typeof(DTE));
+            if (dte != null) {
+                ScriptCompiler.ClearOutput();
+
+                if (dte.ActiveDocument == null) {
+                    ScriptCompiler.Output.PrintError("No active document.");
+                    return;
+                }
+                if (Path.GetExtension(dte.ActiveDocument.Name) != PapyrusContentDefinition.FileExtension) {
+                    ScriptCompiler.Output.PrintError("Active document is not a papyrus script file or does not have the proper extension (*{0}).", PapyrusContentDefinition.FileExtension);
+                    return;
+                }
+                
+                ScriptCompiler.StartCompileThread(dte.ActiveDocument.FullName, "C:\\PapyrusScripts");
+            }
         }
     }
 }
