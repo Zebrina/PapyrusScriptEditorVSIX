@@ -67,7 +67,7 @@ namespace Papyrus.Language.Tokens {
 
         #endregion
 
-        public PapyrusTokenType Type { get { return PapyrusTokenType.Keyword; } }
+        public PapyrusTokenType Type { get { return PapyrusTokenType.Operator; } }
         public string Value { get; private set; }
         public int TokenSize { get { return Value.Length; } }
         public bool IsCompileTimeConstant { get { return false; } }

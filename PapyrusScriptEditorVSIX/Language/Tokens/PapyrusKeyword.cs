@@ -8,11 +8,12 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel.Composition;
 using System.Diagnostics;
+using System.Linq;
 using System.Windows.Media;
 
 // READY
 namespace Papyrus.Language.Tokens {
-    public sealed class PapyrusKeyword : IPapyrusToken, ISyntaxColorableToken {
+    public sealed class PapyrusKeyword : IPapyrusToken, ISyntaxColorableToken, IOutlineableToken {
         public enum KeywordAttribute {
             ScriptAttribute,
             PropertyAttribute,
@@ -155,8 +156,58 @@ namespace Papyrus.Language.Tokens {
             return keyword;
         }
 
+        public bool HasAttribute(KeywordAttribute attribute) {
+            return Attributes.Contains(attribute);
+        }
+
         IClassificationType ISyntaxColorableToken.GetClassificationType(IClassificationTypeRegistryService registry) {
             return registry.GetClassificationType(PapyrusKeywordColorFormat.Name);
+        }
+
+        bool IOutlineableToken.IsOutlineableStart(IReadOnlyTokenSnapshotLine line) {
+            if (HasAttribute(KeywordAttribute.OutlineableBegin)) {
+                if (this == Property) {
+                    return !line.Any(t => t.Type.Type == PapyrusTokenType.Keyword && ((PapyrusKeyword)t.Type).HasAttribute(KeywordAttribute.BreakOutlineableProperty));
+                }
+                else if (this == Function) {
+                    return !line.Any(t => t.Type.Type == PapyrusTokenType.Keyword && ((PapyrusKeyword)t.Type).HasAttribute(KeywordAttribute.BreakOutlineableFunction));
+                }
+                return true;
+            }
+            return false;
+        }
+        bool IOutlineableToken.IsOutlineableEnd(IOutlineableToken startToken) {
+            PapyrusKeyword startTokenKeyword = startToken as PapyrusKeyword;
+            if (startTokenKeyword != null) {
+                if (startTokenKeyword == Property) {
+                    return this == EndProperty;
+                }
+                else if (startTokenKeyword == Function) {
+                    return this == EndFunction;
+                }
+                else if (startTokenKeyword == Event) {
+                    return this == EndEvent;
+                }
+                else if (startTokenKeyword == State) {
+                    return this == EndState;
+                }
+                else if (startTokenKeyword == Group) {
+                    return this == EndGroup;
+                }
+                else if (startTokenKeyword == Struct) {
+                    return this == EndStruct;
+                }
+            }
+            return false;
+        }
+        bool IOutlineableToken.IsImplementation {
+            get { return false; }
+        }
+        string IOutlineableToken.CollapsedText {
+            get { return "..."; }
+        }
+        bool IOutlineableToken.CollapseFirstLine {
+            get { return false; }
         }
     }
 
