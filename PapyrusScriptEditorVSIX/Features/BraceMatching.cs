@@ -1,16 +1,16 @@
-﻿using Microsoft.VisualStudio.Text.Tagging;
+﻿using Microsoft.VisualStudio.Text;
+using Microsoft.VisualStudio.Text.Classification;
+using Microsoft.VisualStudio.Text.Editor;
+using Microsoft.VisualStudio.Text.Tagging;
+using Microsoft.VisualStudio.Utilities;
+using Papyrus.Language.Parsing;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using Microsoft.VisualStudio.Text;
-using Microsoft.VisualStudio.Text.Editor;
-using Microsoft.VisualStudio.Utilities;
 using System.ComponentModel.Composition;
-using Microsoft.VisualStudio.Text.Classification;
+using System.Linq;
 using System.Windows.Media;
-using Papyrus.Language;
-using Papyrus.Language.Components;
 
+/*
 namespace Papyrus.Features {
     internal class BraceMatchingTag : TextMarkerTag {
         public BraceMatchingTag() :
@@ -44,13 +44,13 @@ namespace Papyrus.Features {
             this.SourceBuffer = sourceBuffer;
             this.CurrentChar = null;
             this.View.Caret.PositionChanged += CaretPositionChanged;
-            BackgroundParser.Singleton.RequestParse(view.TextSnapshot);
+            BackgroundParser.Singleton.RequestReParse(view.TextSnapshot);
             this.View.LayoutChanged += ViewLayoutChanged;
         }
 
         void ViewLayoutChanged(object sender, TextViewLayoutChangedEventArgs e) {
             if (e.NewSnapshot != e.OldSnapshot) {
-                BackgroundParser.Singleton.RequestParse(e.NewSnapshot);
+                BackgroundParser.Singleton.RequestReParse(e.NewSnapshot);
                 UpdateAtCaretPosition(View.Caret.Position);
             }
         }
@@ -161,3 +161,4 @@ namespace Papyrus.Features {
         }
     }
 }
+*/

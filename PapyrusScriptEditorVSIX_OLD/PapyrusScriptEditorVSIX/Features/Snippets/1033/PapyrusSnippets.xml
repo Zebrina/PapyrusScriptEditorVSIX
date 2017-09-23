@@ -1,0 +1,12 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<SnippetCollection>
+  <Language Lang="Papyrus" Guid="{21D979E9-61DB-4373-8C1E-677A9EA580C5}">
+    <SnippetDir>
+      <OnOff>On</OnOff>
+      <Installed>true</Installed>
+      <Locale>1033</Locale>
+      <DirPath>%ProjItem%\Snippets\%LCID%\</DirPath>
+      <LocalizedName>Snippets</LocalizedName>
+    </SnippetDir>
+  </Language>
+</SnippetCollection>

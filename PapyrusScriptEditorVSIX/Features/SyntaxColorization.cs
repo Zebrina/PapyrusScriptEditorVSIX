@@ -7,17 +7,15 @@
 using Microsoft.VisualStudio.Text;
 using Microsoft.VisualStudio.Text.Classification;
 using Microsoft.VisualStudio.Utilities;
-using Papyrus.Language.Components;
+using Papyrus.Language;
+using Papyrus.Language.Parsing;
+using Papyrus.Language.Tokens.Interfaces;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.Composition;
 using System.Linq;
 
 namespace Papyrus.Features {
-    public interface ISyntaxColorable {
-        IClassificationType GetClassificationType(IClassificationTypeRegistryService registry);
-    }
-
     /// <summary>
     /// Classifier that classifies all text as an instance of the "SyntaxColorization" classification type.
     /// </summary>
@@ -36,14 +34,23 @@ namespace Papyrus.Features {
             this.buffer = buffer;
             this.snapshot = buffer.CurrentSnapshot;
             this.buffer.Changed += Buffer_Changed;
-            BackgroundParser.Singleton.RequestParse(buffer.CurrentSnapshot);
+            PapyrusEditor.TargetGameInfoChanged += PapyrusEditor_TargetGameInfoChanged;
+
+            BackgroundParser.Singleton.RequestReParse(buffer.CurrentSnapshot);
             this.tokenSnapshot = BackgroundParser.Singleton.TokenSnapshot;
+            ReParse();
         }
 
         private void Buffer_Changed(object sender, TextContentChangedEventArgs e) {
             if (e.After == buffer.CurrentSnapshot) {
+                BackgroundParser.Singleton.RequestReParse(buffer.CurrentSnapshot);
                 ReParse();
             }
+        }
+
+        private void PapyrusEditor_TargetGameInfoChanged(object sender, TargetGameInfoChangedEventArgs e) {
+            BackgroundParser.Singleton.ForceReParse(buffer.CurrentSnapshot);
+            ReParse();
         }
 
         /// <summary>
@@ -68,7 +75,7 @@ namespace Papyrus.Features {
         public IList<ClassificationSpan> GetClassificationSpans(SnapshotSpan span) {
             var result = new List<ClassificationSpan>();
             foreach (var token in tokenSnapshot.Tokens) {
-                ISyntaxColorable colorable = token.Type as ISyntaxColorable;
+                ISyntaxColorableToken colorable = token.Type as ISyntaxColorableToken;
                 if (colorable != null) {
                     result.Add(new ClassificationSpan(token.Span, colorable.GetClassificationType(registry)));
                 }
@@ -78,8 +85,6 @@ namespace Papyrus.Features {
         }
 
         private void ReParse() {
-            BackgroundParser.Singleton.RequestParse(buffer.CurrentSnapshot);
-
             ITextSnapshot newSnapshot = buffer.CurrentSnapshot;
             IReadOnlyTokenSnapshot newTokenSnapshot = BackgroundParser.Singleton.TokenSnapshot;
 

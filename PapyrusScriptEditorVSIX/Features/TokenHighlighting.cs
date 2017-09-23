@@ -4,16 +4,16 @@ using Microsoft.VisualStudio.Text.Editor;
 using Microsoft.VisualStudio.Text.Operations;
 using Microsoft.VisualStudio.Text.Tagging;
 using Microsoft.VisualStudio.Utilities;
-using Papyrus.Features;
 using Papyrus.Language;
-using Papyrus.Language.Components;
+using Papyrus.Language.Parsing;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.Composition;
 using System.Linq;
 using System.Windows.Media;
 
-namespace Papyrus {
+/*
+namespace Papyrus.Features {
     internal class TokenHighlightingTag : TextMarkerTag {
         public TokenHighlightingTag() :
             base(TokenHighlighting.Name) {
@@ -56,7 +56,7 @@ namespace Papyrus {
 
         private void ViewLayoutChanged(object sender, TextViewLayoutChangedEventArgs e) {
             if (e.NewSnapshot != e.OldSnapshot) {
-                BackgroundParser.Singleton.RequestParse(e.NewSnapshot);
+                BackgroundParser.Singleton.RequestReParse(e.NewSnapshot);
                 UpdateAtCaretPosition(view.Caret.Position);
             }
         }
@@ -163,3 +163,4 @@ namespace Papyrus {
         }
     }
 }
+*/

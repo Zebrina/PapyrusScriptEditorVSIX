@@ -9,6 +9,7 @@ using System.IO;
 using System.Text;
 using System.Windows.Forms;
 using Papyrus.Common;
+using Papyrus.Common.Extensions;
 
 namespace Papyrus.Utilities {
     /*
@@ -72,7 +73,7 @@ namespace Papyrus.Utilities {
 
             List<string> importFolders = new List<string>();
             importFolders.Add(Path.GetDirectoryName(fileOrFolder));
-            importFolders.AddRange(PapyrusEditor.Instance.CurrentGame.DefaultSourceFolders);
+            importFolders.AddRange(PapyrusEditor.ActiveGame.DefaultSourceFolders);
             if (additionalImportFolders != null) {
                 importFolders.AddRange(additionalImportFolders);
             }
@@ -82,7 +83,7 @@ namespace Papyrus.Utilities {
             compileProcessInfo.FileName = compilerPath;
             compileProcessInfo.Arguments = String.Format("\"{0}\" -f=\"{1}\" -i=\"{2}\" -o=\"{3}\"{4}",
                 fileOrFolder,
-                PapyrusEditor.Instance.CurrentGame.CompilerFlags,
+                PapyrusEditor.ActiveGame.CompilerFlags,
                 String.Join(";", importFolders.Distinct()),
                 outputFolder,
                 FormatCompilerFlags(additionalFlags));

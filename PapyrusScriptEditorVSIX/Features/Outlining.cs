@@ -2,7 +2,7 @@
 using Microsoft.VisualStudio.Text.Tagging;
 using Microsoft.VisualStudio.Utilities;
 using Papyrus.Language;
-using Papyrus.Language.Components;
+using Papyrus.Language.Parsing;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.Composition;
@@ -72,7 +72,20 @@ namespace Papyrus.Features {
             this.snapshot = buffer.CurrentSnapshot;
             this.regions = new List<Region>();
             ReParse();
-            this.buffer.Changed += BufferChanged;
+            this.buffer.Changed += Buffer_Changed;
+            PapyrusEditor.TargetGameInfoChanged += PapyrusEditor_TargetGameInfoChanged;
+        }
+
+        void Buffer_Changed(object sender, TextContentChangedEventArgs e) {
+            // If this isn't the most up-to-date version of the buffer, then ignore it for now (we'll eventually get another change event).
+            if (e.After == buffer.CurrentSnapshot) {
+                ReParse();
+            }
+        }
+
+        private void PapyrusEditor_TargetGameInfoChanged(object sender, TargetGameInfoChangedEventArgs e) {
+            BackgroundParser.Singleton.ForceReParse(buffer.CurrentSnapshot);
+            ReParse();
         }
 
         public IEnumerable<ITagSpan<IOutliningRegionTag>> GetTags(NormalizedSnapshotSpanCollection spans) {
@@ -99,7 +112,7 @@ namespace Papyrus.Features {
         }
 
         void ReParse() {
-            BackgroundParser.Singleton.RequestParse(buffer.CurrentSnapshot);
+            BackgroundParser.Singleton.RequestReParse(buffer.CurrentSnapshot);
 
             ITextSnapshot newSnapshot = buffer.CurrentSnapshot;
             List<Region> newRegions = new List<Region>();
@@ -163,13 +176,6 @@ namespace Papyrus.Features {
             if (changeStart <= changeEnd) {
                 ITextSnapshot snap = snapshot;
                 TagsChanged?.Invoke(this, new SnapshotSpanEventArgs(new SnapshotSpan(snapshot, Span.FromBounds(changeStart, changeEnd))));
-            }
-        }
-
-        void BufferChanged(object sender, TextContentChangedEventArgs e) {
-            // If this isn't the most up-to-date version of the buffer, then ignore it for now (we'll eventually get another change event).
-            if (e.After == buffer.CurrentSnapshot) {
-                ReParse();
             }
         }
 

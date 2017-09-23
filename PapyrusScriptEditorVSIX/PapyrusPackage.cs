@@ -12,7 +12,7 @@ using Microsoft.VisualStudio.Shell;
 using Papyrus.Utilities;
 using Papyrus.Commands;
 using Papyrus.Language;
-using Papyrus.Language.Components.Tokens;
+using Microsoft.VisualStudio.Shell.Interop;
 
 namespace Papyrus {
     /// <summary>
@@ -34,11 +34,13 @@ namespace Papyrus {
     /// </remarks>
     [PackageRegistration(UseManagedResourcesOnly = true)]
     [InstalledProductRegistration("#110", "#112", "1.0", IconResourceID = 400)] // Info on this package for Help/About
+    [ProvideAutoLoad(UIContextGuids80.SolutionExists)]
     [Guid(PapyrusGUID.PackageGuidString)]
     [SuppressMessage("StyleCop.CSharp.DocumentationRules", "SA1650:ElementDocumentationMustBeSpelledCorrectly", Justification = "pkgdef, VS and vsixmanifest are valid VS terms")]
     [ProvideLanguageService(PapyrusGUID.LanguageServiceGuidString, "Papyrus", 0,
         AutoOutlining = true)]
     [ProvideMenuResource("Menus.ctmenu", 1)]
+    [ProvideOptionPage(typeof(PapyrusOptionPage), "Papyrus", "General", 0, 0, true)]
     [ProvideProjectFactory(typeof(PapyrusProjectFactory),
         "Papyrus Project",
         "Papyrus Project Files (*.pscproj);*.pscproj",
@@ -102,13 +104,13 @@ namespace Papyrus {
             }
             */
 
+            // Initialize global editor class.
+            PapyrusEditor.Initialize(this);
+
             // Register .pscproj project type.
             RegisterProjectFactory(new PapyrusProjectFactory(this));
 
             OutputWindowPaneManager.Initialize(this);
-
-            // Initialize library.
-            //ScriptLibrary.Instance.Initialize(this);
 
             // Initialize compiler and assembler.
             ScriptCompiler.Initialize(this);

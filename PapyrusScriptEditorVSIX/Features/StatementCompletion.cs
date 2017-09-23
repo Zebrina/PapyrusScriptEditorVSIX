@@ -8,16 +8,15 @@ using Microsoft.VisualStudio.Text.Editor;
 using Microsoft.VisualStudio.Text.Operations;
 using Microsoft.VisualStudio.TextManager.Interop;
 using Microsoft.VisualStudio.Utilities;
-using Papyrus.Features;
-using Papyrus.Language;
-using Papyrus.Language.Components.Tokens;
+using Papyrus.Language.Parsing;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.Composition;
 using System.Linq;
 using System.Runtime.InteropServices;
 
-namespace Papyrus {
+/*
+namespace Papyrus.Features {
     internal class StatementCompletionSource : ICompletionSource {
         private StatementCompletionSourceProvider sourceProvider;
         private ITextBuffer textBuffer;
@@ -30,7 +29,7 @@ namespace Papyrus {
 
         private PapyrusTokenInfo FindTokenInfoAtPosition(ICompletionSession session) {
             SnapshotPoint currentPoint = (session.TextView.Caret.Position.BufferPosition) - 1;
-            PapyrusTokenInfo token = BackgroundParser.Singleton.TokenSnapshot.ParseableTokens.SingleOrDefault(t => t.Type.TypeID == TokenTypeID.Identifier && t.Span.Contains(currentPoint));
+            PapyrusTokenInfo token = BackgroundParser.Singleton.TokenSnapshot.ParseableTokens.SingleOrDefault(t => t.Type.TypeID == PapyrusTokenType.Identifier && t.Span.Contains(currentPoint));
             return token;
         }
 
@@ -42,7 +41,7 @@ namespace Papyrus {
         }
 
         public void AugmentCompletionSession(ICompletionSession session, IList<CompletionSet> completionSets) {
-            BackgroundParser.Singleton.RequestParse(session.TextView.TextSnapshot);
+            BackgroundParser.Singleton.RequestReParse(session.TextView.TextSnapshot);
             var tokens = BackgroundParser.Singleton.TokenSnapshot;
 
             SnapshotPoint currentPoint = (session.TextView.Caret.Position.BufferPosition) - 1;
@@ -77,23 +76,6 @@ namespace Papyrus {
                     null));
                 }
             }
-
-            /*
-            List<string> strList = new List<string>();
-            strList.Add("Open");
-            strList.Add("Close");
-            compList = new List<Completion>();
-            foreach (string str in strList)
-                compList.Add(new Completion(str + "(int i)", str, str, null, null));
-
-            completionSets.Add(new CompletionSet(
-                "Tokens",    //the non-localized title of the tab
-                "Tokens",    //the display title of the tab
-                FindTokenSpanAtPosition(session.GetTriggerPoint(textBuffer),
-                    session),
-                compList,
-                null));
-                */
         }
 
         private bool isDisposed = false;
@@ -243,3 +225,4 @@ namespace Papyrus {
         }
     }
 }
+*/
