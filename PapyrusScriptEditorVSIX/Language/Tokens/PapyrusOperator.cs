@@ -1,8 +1,8 @@
 ﻿using Microsoft.VisualStudio.Text.Classification;
 using Microsoft.VisualStudio.Utilities;
+using Papyrus.Features;
 using Papyrus.Language.Parsing;
 using Papyrus.Language.Tokens;
-using Papyrus.Language.Tokens.Interfaces;
 using System;
 using System.Collections;
 using System.Collections.Generic;

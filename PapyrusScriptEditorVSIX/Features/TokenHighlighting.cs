@@ -14,6 +14,9 @@ using System.Windows.Media;
 
 /*
 namespace Papyrus.Features {
+    public interface IHighlightableToken {
+    }
+
     internal class TokenHighlightingTag : TextMarkerTag {
         public TokenHighlightingTag() :
             base(TokenHighlighting.Name) {

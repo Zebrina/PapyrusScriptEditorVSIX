@@ -12,6 +12,9 @@ using System.Windows.Media;
 
 /*
 namespace Papyrus.Features {
+    public interface IMatchableBracerToken {
+    }
+
     internal class BraceMatchingTag : TextMarkerTag {
         public BraceMatchingTag() :
             base(BraceMatching.Name) {

@@ -2,8 +2,8 @@
 using Microsoft.VisualStudio.Utilities;
 using Papyrus.Common;
 using Papyrus.Common.Extensions;
+using Papyrus.Features;
 using Papyrus.Language.Parsing;
-using Papyrus.Language.Tokens.Interfaces;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.Composition;

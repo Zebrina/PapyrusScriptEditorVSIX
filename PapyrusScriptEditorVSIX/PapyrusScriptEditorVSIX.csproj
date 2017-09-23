@@ -90,10 +90,6 @@
     <Compile Include="Language\Parsing\TokenParsingContext.cs" />
     <Compile Include="Language\Parsing\TokenSnapshot.cs" />
     <Compile Include="Language\Parsing\TokenSnapshotLine.cs" />
-    <Compile Include="Language\Tokens\Interfaces\IHighlightableToken.cs" />
-    <Compile Include="Language\Tokens\Interfaces\IMatchableBracerToken.cs" />
-    <Compile Include="Language\Tokens\Interfaces\IOutlineableToken.cs" />
-    <Compile Include="Language\Tokens\Interfaces\ISyntaxColorableToken.cs" />
     <Compile Include="Language\IPapyrusScriptMember.cs" />
     <Compile Include="Language\IScriptComponent.cs" />
     <Compile Include="Language\PapyrusScriptMemberFlags.cs" />

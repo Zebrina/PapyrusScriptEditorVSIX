@@ -136,7 +136,7 @@ namespace Papyrus.Language.Tokens {
     internal sealed class PapyrusDelimiterParser : ITokenParser {
         public bool TryParse(TokenParsingContext context, out IPapyrusToken token) {
             if (context.Scanner.CurrentState == TokenScannerState.Default) {
-                PapyrusDelimiter delimiter = PapyrusDelimiter.FromCharacter(context.Source.FirstOrNull());
+                PapyrusDelimiter delimiter = PapyrusDelimiter.FromCharacter(context.Source.FirstOrDefault());
                 if (delimiter != null) {
                     token = delimiter;
                     return true;

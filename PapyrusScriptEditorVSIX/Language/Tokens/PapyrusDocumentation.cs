@@ -1,7 +1,7 @@
 ﻿using Microsoft.VisualStudio.Text.Classification;
 using Microsoft.VisualStudio.Utilities;
+using Papyrus.Features;
 using Papyrus.Language.Parsing;
-using Papyrus.Language.Tokens.Interfaces;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.Composition;
@@ -29,7 +29,7 @@ namespace Papyrus.Language.Tokens {
             return registry.GetClassificationType(PapyrusDocumentationColorFormat.Name);
         }
 
-        bool IOutlineableToken.IsOutlineableStart(IEnumerable<PapyrusTokenInfo> line) {
+        bool IOutlineableToken.IsOutlineableStart(IReadOnlyTokenSnapshotLine line) {
             return DocumentationText.FirstOrDefault() == '{' && DocumentationText.LastOrDefault() != '}';
         }
         bool IOutlineableToken.IsOutlineableEnd(IOutlineableToken startToken) {

@@ -1,7 +1,7 @@
 ﻿using Microsoft.VisualStudio.Text.Classification;
 using Microsoft.VisualStudio.Utilities;
+using Papyrus.Features;
 using Papyrus.Language.Parsing;
-using Papyrus.Language.Tokens.Interfaces;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.Composition;
@@ -11,7 +11,7 @@ using System.Windows.Media;
 
 namespace Papyrus.Language.Tokens {
     [DebuggerStepThrough]
-    public sealed class PapyrusComment : IPapyrusToken, ISyntaxColorableToken {
+    public sealed class PapyrusComment : IPapyrusToken, ISyntaxColorableToken, IOutlineableToken {
         public const char LineBegin = ';';
         public const string BlockBegin = ";/";
         public const string BlockEnd = "/;";
@@ -31,6 +31,22 @@ namespace Papyrus.Language.Tokens {
 
         IClassificationType ISyntaxColorableToken.GetClassificationType(IClassificationTypeRegistryService registry) {
             return registry.GetClassificationType(PapyrusCommentColorFormat.Name);
+        }
+
+        bool IOutlineableToken.IsOutlineableStart(IReadOnlyTokenSnapshotLine line) {
+            return IsBlock && Text.StartsWith(BlockBegin) && !Text.EndsWith(BlockEnd);
+        }
+        bool IOutlineableToken.IsOutlineableEnd(IOutlineableToken startToken) {
+            return IsBlock && Text.EndsWith(BlockEnd) && !Text.StartsWith(BlockBegin);
+        }
+        bool IOutlineableToken.IsImplementation {
+            get { return false; }
+        }
+        string IOutlineableToken.CollapsedText {
+            get { return ";/ ... /;"; }
+        }
+        bool IOutlineableToken.CollapseFirstLine {
+            get { return true; }
         }
     }
 

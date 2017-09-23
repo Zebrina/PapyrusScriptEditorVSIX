@@ -9,13 +9,16 @@ using Microsoft.VisualStudio.Text.Classification;
 using Microsoft.VisualStudio.Utilities;
 using Papyrus.Language;
 using Papyrus.Language.Parsing;
-using Papyrus.Language.Tokens.Interfaces;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.Composition;
 using System.Linq;
 
 namespace Papyrus.Features {
+    public interface ISyntaxColorableToken {
+        IClassificationType GetClassificationType(IClassificationTypeRegistryService registry);
+    }
+
     /// <summary>
     /// Classifier that classifies all text as an instance of the "SyntaxColorization" classification type.
     /// </summary>

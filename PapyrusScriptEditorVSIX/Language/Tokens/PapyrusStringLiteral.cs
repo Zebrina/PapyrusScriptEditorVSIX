@@ -6,8 +6,8 @@ using System.ComponentModel.Composition;
 using System.Diagnostics;
 using System.Linq;
 using System.Windows.Media;
-using Papyrus.Language.Tokens.Interfaces;
 using Papyrus.Language.Parsing;
+using Papyrus.Features;
 
 // READY
 namespace Papyrus.Language.Tokens {
