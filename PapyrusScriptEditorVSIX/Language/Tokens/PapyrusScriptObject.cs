@@ -7,6 +7,7 @@ using Papyrus.Language.ScriptMembers;
 using System.Collections.Generic;
 using System.ComponentModel.Composition;
 using System.Diagnostics;
+using System.Linq;
 using System.Windows.Media;
 
 namespace Papyrus.Language.Tokens {
@@ -36,7 +37,7 @@ namespace Papyrus.Language.Tokens {
 
     internal sealed class PapyrusScriptObjectParser : ITokenParser {
         public bool TryParse(TokenParsingContext context, out IPapyrusToken token) {
-            if (context.Scanner.CurrentState == TokenScannerState.Default) {
+            if (context.Scanner.CurrentState == TokenScannerState.Default && (context.PreviousTokens.Count() == 0 || context.PreviousTokens.Last() != PapyrusKeyword.Scriptname)) {
                 int nextDelim = PapyrusDelimiter.FindNext(context.Source, 0);
                 PapyrusScriptObject scriptObject = PapyrusScriptObject.Get(context.Source.TryRemove(nextDelim));
                 if (scriptObject != null) {

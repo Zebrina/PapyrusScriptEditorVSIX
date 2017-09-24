@@ -1,7 +1,10 @@
 ﻿using Papyrus.Common;
 using Papyrus.Common.Extensions;
+using Papyrus.Language.Parsing;
+using Papyrus.Language.Tokens;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -16,7 +19,8 @@ namespace Papyrus.Language.ScriptMembers {
         private HashSet<string> memberKeys = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         private Dictionary<PapyrusScriptMemberType, ICollection<IPapyrusScriptMember>> memberValues;
 
-        public PapyrusScript() {
+        public PapyrusScript(string scriptName) {
+            this.ScriptName = scriptName;
             this.memberValues = new Dictionary<PapyrusScriptMemberType, ICollection<IPapyrusScriptMember>>();
             foreach (PapyrusScriptMemberType type in Enum.GetValues(typeof(PapyrusScriptMemberType))) {
                 memberValues.Add(type, new List<IPapyrusScriptMember>());
@@ -96,26 +100,83 @@ namespace Papyrus.Language.ScriptMembers {
         private Dictionary<string, PapyrusScript> loadedScripts = new Dictionary<string, PapyrusScript>(StringComparer.OrdinalIgnoreCase);
 
         public PapyrusScript GetScript(string scriptName) {
+            return GetScript(scriptName, true);
+        }
+        public PapyrusScript GetScript(string scriptName, bool tryLoad) {
             PapyrusScript script;
             if (loadedScripts.TryGetValue(scriptName, out script)) {
                 return script;
             }
+            else if (tryLoad) {
+                return TryLoadScript(scriptName);
+            }
             return null;
         }
-        public void AddScript(PapyrusScript script) {
-            if (!loadedScripts.ContainsKey(script.ScriptName)) {
-                loadedScripts.Add(script.ScriptName, script);
+        public void AddScript(PapyrusScript papyrusScript) {
+            if (!loadedScripts.ContainsKey(papyrusScript.ScriptName)) {
+                loadedScripts.Add(papyrusScript.ScriptName, papyrusScript);
             }
         }
-        public bool RemoveScript(PapyrusScript script) {
-            return loadedScripts.Remove(script.ScriptName);
+        public bool RemoveScript(PapyrusScript papyrusScript) {
+            return loadedScripts.Remove(papyrusScript.ScriptName);
         }
         public bool RemoveScript(string scriptName) {
             return loadedScripts.Remove(scriptName);
         }
 
-        public bool LoadScript(string fileName) {
+        public bool LoadScript(string scriptName) {
+            return TryLoadScript(scriptName) != null;
+        }
+
+        public bool ReloadScript(string scriptName) {
             return false;
+        }
+
+        private PapyrusScript TryLoadScript(string scriptName) {
+            string fileName = PapyrusEditor.FindSourceFile(scriptName);
+            if (!String.IsNullOrEmpty(fileName)) {
+                PapyrusScript papyrusScript = new PapyrusScript(scriptName);
+                loadedScripts.Add(scriptName, papyrusScript);
+                using (StreamReader fileStream = new StreamReader(fileName)) {
+                    if (!TryParseScript(fileStream, papyrusScript)) {
+                        //loadedScripts.Remove(papyrusScript.ScriptName);
+                    }
+                    return papyrusScript;
+                }
+            }
+            return null;
+        }
+
+        private static bool TryParseScript(StreamReader fileStream, PapyrusScript papyrusScript) {
+            TokenScanner scanner = new TokenScanner();
+            scanner.AddParser(new PapyrusBlockCommentParser());
+            scanner.AddParser(new PapyrusLineCommentParser());
+            scanner.AddParser(new PapyrusDocumentationParser());
+            scanner.AddParser(new PapyrusStringLiteralParser());
+            scanner.AddParser(new PapyrusNumericLiteralParser());
+            scanner.AddParser(new PapyrusOperatorParser());
+            scanner.AddParser(new PapyrusDelimiterParser());
+            scanner.AddParser(new PapyrusKeywordParser());
+            scanner.AddParser(new PapyrusScriptObjectParser());
+            scanner.AddParser(new PapyrusIdentifierParser());
+
+            var tokenLines = new List<List<IPapyrusToken>>();
+            //TokenSnapshot resultTokenSnapshot = new TokenSnapshot(snapshot);
+            var parsedLine = new List<IPapyrusToken>();
+
+            string line;
+            while (!String.IsNullOrEmpty(line = fileStream.ReadLine())) {
+                if (scanner.ScanLine(line, parsedLine) == 0 || parsedLine.Any(t => t.IsLineExtension)) {
+                    continue;
+                }
+
+                tokenLines.Add(parsedLine);
+                parsedLine = new List<IPapyrusToken>();
+            }
+
+            // Lots of stuff to do here ...
+
+            return true;
         }
     }
 }

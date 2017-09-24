@@ -43,38 +43,65 @@ namespace Papyrus.Language.Parsing {
             }
         }
 
-        private bool TryParse(ITokenParser parser, SnapshotSpan sourceSnapshotSpan, IEnumerable<IPapyrusToken> previousTokens, PapyrusTokenInfo tokenInfo) {
-            IPapyrusToken token;
+        public int ScanLine(ITextSnapshotLine source, ICollection<PapyrusTokenInfo> result) {
+            int initialTokenCount = result.Count;
+
             TokenParsingContext context = new TokenParsingContext();
             context.Scanner = this;
-            context.Source = sourceSnapshotSpan.GetText();
-            context.PreviousTokens = previousTokens;
-            //context.Scanner = this;
-            //context.Source = sourceSnapshotSpan.GetText();
+            context.Source = source.GetText();
+            
+            int offset = 0;
+            while (offset < source.Length) {
+                // Update previous tokens.
+                context.PreviousTokens = result.Select(t => t.Type);
 
-            if (parser.TryParse(context, out token)) {
-                tokenInfo.Type = token;
-                tokenInfo.Span = new SnapshotSpan(sourceSnapshotSpan.Snapshot, sourceSnapshotSpan.Subspan(0, token.TokenSize));
-                return true;
-            }
-            return false;
-        }
-
-        public void ScanLine(ITextSnapshotLine source, ICollection<PapyrusTokenInfo> result) {
-            SnapshotSpan sourceSnapshotSpan = source.Extent;
-            while (!sourceSnapshotSpan.IsEmpty) {
                 PapyrusTokenInfo tokenInfo = new PapyrusTokenInfo();
                 foreach (ITokenParser parser in parsers) {
-                    if (TryParse(parser, sourceSnapshotSpan, result.Select(t => t.Type), tokenInfo)) {
+                    IPapyrusToken token;
+                    if (parser.TryParse(context, out token)) {
+                        tokenInfo.Type = token;
+                        tokenInfo.Span = new SnapshotSpan(source.Snapshot, source.Extent.Subspan(offset, token.TokenSize));
                         result.Add(tokenInfo);
-                        if (tokenInfo.Span.End.Position > sourceSnapshotSpan.End.Position) {
-                            return;
-                        }
-                        sourceSnapshotSpan = sourceSnapshotSpan.Subspan(tokenInfo.Span.Length);
+
+                        offset += token.TokenSize;
+
                         break;
                     }
                 }
+
+                // Update source.
+                context.Source = source.GetText().Substring(offset);
             }
+
+            return result.Count - initialTokenCount;
+        }
+
+        public int ScanLine(string sourceLine, ICollection<IPapyrusToken> result) {
+            int initialTokenCount = result.Count;
+
+            TokenParsingContext context = new TokenParsingContext();
+            context.Scanner = this;
+            context.Source = sourceLine;
+            context.PreviousTokens = result;
+
+            int offset = 0;
+            while (offset < sourceLine.Length) {
+                foreach (ITokenParser parser in parsers) {
+                    IPapyrusToken token;
+                    if (parser.TryParse(context, out token)) {
+                        result.Add(token);
+
+                        offset += token.TokenSize;
+
+                        break;
+                    }
+                }
+
+                // Update source.
+                context.Source = sourceLine.Substring(offset);
+            }
+
+            return result.Count - initialTokenCount;
         }
     }
 }

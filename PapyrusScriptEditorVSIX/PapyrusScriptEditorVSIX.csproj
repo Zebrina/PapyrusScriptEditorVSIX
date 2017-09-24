@@ -133,7 +133,6 @@
     <Compile Include="Features\SyntaxColorization.cs" />
     <Compile Include="Utilities\OutputWindowPane.cs" />
     <Compile Include="Utilities\OutputWindowPaneManager.cs" />
-    <Compile Include="Utilities\PapyrusFile.cs" />
     <Compile Include="Utilities\ScriptAssembler.cs" />
     <Compile Include="Utilities\ScriptCompiler.cs" />
   </ItemGroup>

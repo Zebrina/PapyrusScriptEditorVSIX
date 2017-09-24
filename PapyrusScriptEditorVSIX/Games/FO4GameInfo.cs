@@ -10,6 +10,7 @@ namespace Papyrus.Games {
     [PapyrusEditor.RegisterGameInfo]
     public class FO4GameInfo : IGameInfo {
         private static string[] sourceFolders = new string[] {
+            @"C:\Games\Steam\SteamApps\commob\Fallout 4\Data\Scripts\Source\F4SE",
             @"C:\Games\Steam\SteamApps\common\Fallout 4\Data\Scripts\Source\Base",
             @"C:\Games\Steam\SteamApps\common\Fallout 4\Data\Scripts\Source\DLC01",
             @"C:\Games\Steam\SteamApps\common\Fallout 4\Data\Scripts\Source\DLC02",
